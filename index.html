@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Минималистичный список задач To-Do Board">
+  <title>To-Do Board</title>
+  <style>
+    :root {
+      --color-background: #f7f7f5;
+      --color-surface: #ffffff;
+      --color-text-primary: #292927;
+      --color-text-secondary: #7a7a75;
+      --color-border: #e8e8e4;
+      --color-status-backlog: #e9e7e2;
+      --color-status-todo: #dce8f5;
+      --color-status-progress: #f6e8c9;
+      --color-status-done: #ddeedc;
+      --color-accent: #738a78;
+      --color-accent-hover: #657b6a;
+      --color-danger: #9d514b;
+      --color-danger-soft: #fbefed;
+
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --radius-xl: 12px;
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --space-8: 32px;
+
+      --transition-base: 0.3s ease;
+      --content-width: 760px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      color-scheme: light;
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background: var(--color-background);
+      color: var(--color-text-primary);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-header {
+      background: rgba(247, 247, 245, 0.94);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .app-header__inner,
+    .workspace {
+      width: min(100% - 48px, var(--content-width));
+      margin-inline: auto;
+    }
+
+    .app-header__inner {
+      display: flex;
+      align-items: center;
+      min-height: 72px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    .brand__mark {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: var(--color-accent);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .brand__mark svg,
+    .icon-button svg,
+    .primary-button svg,
+    .empty-state svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .brand__title {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .workspace {
+      padding-block: var(--space-8) 48px;
+    }
+
+    .page-intro {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .page-intro h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .page-intro p {
+      margin: var(--space-1) 0 0;
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .task-summary {
+      flex: 0 0 auto;
+      color: var(--color-text-secondary);
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+
+    .composer {
+      display: flex;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+      padding: var(--space-4);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      background: var(--color-surface);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .task-input {
+      min-width: 0;
+      min-height: 44px;
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      outline: none;
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      font-size: 0.875rem;
+      transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base);
+    }
+
+    .task-input::placeholder {
+      color: var(--color-text-secondary);
+    }
+
+    .task-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14);
+    }
+
+    .task-input[aria-invalid="true"] {
+      border-color: var(--color-danger);
+      box-shadow: 0 0 0 3px rgba(157, 81, 75, 0.12);
+    }
+
+    .primary-button,
+    .icon-button {
+      display: inline-flex;
+      min-width: 44px;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      transition:
+        background-color var(--transition-base),
+        color var(--transition-base),
+        border-color var(--transition-base),
+        transform var(--transition-base),
+        box-shadow var(--transition-base);
+    }
+
+    .primary-button {
+      gap: var(--space-2);
+      padding: 10px 16px;
+      border: 0;
+      background: var(--color-accent);
+      color: #ffffff;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .primary-button:hover {
+      transform: translateY(-1px);
+      background: var(--color-accent-hover);
+      box-shadow: 0 4px 12px rgba(71, 88, 75, 0.14);
+    }
+
+    .primary-button:active,
+    .icon-button:active {
+      transform: scale(0.97);
+    }
+
+    .primary-button:focus-visible,
+    .icon-button:focus-visible {
+      outline: 3px solid rgba(115, 138, 120, 0.3);
+      outline-offset: 2px;
+    }
+
+    .board-column {
+      padding: var(--space-4);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      min-height: 28px;
+      margin-bottom: var(--space-3);
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #94afcd;
+      box-shadow: 0 0 0 3px var(--color-status-todo);
+    }
+
+    .column-header h2 {
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .task-count {
+      display: inline-flex;
+      min-width: 24px;
+      height: 24px;
+      align-items: center;
+      justify-content: center;
+      margin-left: var(--space-1);
+      padding-inline: 7px;
+      border-radius: var(--radius-sm);
+      background: var(--color-status-todo);
+      color: #536779;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .task-list {
+      display: grid;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .task-card {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      transition:
+        transform var(--transition-base),
+        box-shadow var(--transition-base),
+        border-color var(--transition-base),
+        opacity var(--transition-base);
+      animation: card-enter 0.3s ease;
+    }
+
+    .task-card:hover {
+      transform: translateY(-2px);
+      border-color: #deded8;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .task-card.is-removing {
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+
+    .task-card__content {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .task-card__title {
+      overflow-wrap: anywhere;
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 550;
+      line-height: 1.45;
+    }
+
+    .task-card__meta {
+      margin: var(--space-1) 0 0;
+      color: var(--color-text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .icon-button {
+      flex: 0 0 auto;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--color-text-secondary);
+    }
+
+    .icon-button:hover {
+      transform: translateY(-1px);
+      border-color: #f1d9d6;
+      background: var(--color-danger-soft);
+      color: var(--color-danger);
+    }
+
+    .empty-state {
+      display: none;
+      min-height: 200px;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: var(--space-8) var(--space-4);
+      border: 1px dashed #d9d9d3;
+      border-radius: var(--radius-lg);
+      color: var(--color-text-secondary);
+      text-align: center;
+    }
+
+    .empty-state.is-visible {
+      display: flex;
+      animation: card-enter 0.3s ease;
+    }
+
+    .empty-state__icon {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      margin-bottom: var(--space-3);
+      place-items: center;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface);
+      color: var(--color-accent);
+    }
+
+    .empty-state strong {
+      color: var(--color-text-primary);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .empty-state p {
+      max-width: 280px;
+      margin: var(--space-1) 0 0;
+      font-size: 0.8125rem;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes card-enter {
+      from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 767px) {
+      .app-header__inner,
+      .workspace {
+        width: min(100% - 32px, var(--content-width));
+      }
+
+      .app-header__inner {
+        min-height: 64px;
+      }
+
+      .workspace {
+        padding-block: var(--space-6) var(--space-8);
+      }
+
+      .page-intro {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+      }
+
+      .composer {
+        flex-direction: column;
+        margin-bottom: var(--space-4);
+        padding: var(--space-3);
+      }
+
+      .primary-button {
+        width: 100%;
+      }
+
+      .board-column {
+        padding: var(--space-3);
+      }
+
+      .task-card {
+        padding: var(--space-3);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="brand" aria-label="To-Do Board">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+            <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+            <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+            <path d="m15 17 2 2 4-5"></path>
+          </svg>
+        </span>
+        <p class="brand__title">To-Do Board</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="page-intro" aria-labelledby="page-title">
+      <div>
+        <h1 id="page-title">Мои задачи</h1>
+        <p>Всё важное — в одном спокойном списке.</p>
+      </div>
+      <span class="task-summary" id="task-summary" aria-live="polite"></span>
+    </section>
+
+    <form class="composer" id="task-form" novalidate>
+      <label class="visually-hidden" for="task-input">Название новой задачи</label>
+      <input
+        class="task-input"
+        id="task-input"
+        name="task"
+        type="text"
+        maxlength="120"
+        autocomplete="off"
+        placeholder="Например, подготовить план на неделю"
+        required
+      >
+      <button class="primary-button" type="submit">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        <span>Добавить задачу</span>
+      </button>
+    </form>
+
+    <section class="board-column" aria-labelledby="column-title">
+      <header class="column-header">
+        <span class="status-dot" aria-hidden="true"></span>
+        <h2 id="column-title">К выполнению</h2>
+        <span class="task-count" id="task-count" aria-hidden="true">0</span>
+      </header>
+
+      <ul class="task-list" id="task-list"></ul>
+
+      <div class="empty-state" id="empty-state">
+        <span class="empty-state__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </span>
+        <strong>Список задач пуст</strong>
+        <p>Добавьте первую задачу с помощью поля выше.</p>
+      </div>
+    </section>
+
+    <p class="visually-hidden" id="task-feedback" role="status" aria-live="polite"></p>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "todo-board.tasks.v1";
+      const REMOVE_ANIMATION_MS = 300;
+      const defaultTasks = [
+        { id: "welcome-1", title: "Составить список задач на сегодня", createdAt: Date.now() - 120000 },
+        { id: "welcome-2", title: "Определить главную задачу дня", createdAt: Date.now() - 60000 }
+      ];
+
+      const form = document.querySelector("#task-form");
+      const input = document.querySelector("#task-input");
+      const list = document.querySelector("#task-list");
+      const count = document.querySelector("#task-count");
+      const summary = document.querySelector("#task-summary");
+      const emptyState = document.querySelector("#empty-state");
+      const feedback = document.querySelector("#task-feedback");
+
+      let tasks = loadTasks();
+
+      function loadTasks() {
+        try {
+          const savedTasks = localStorage.getItem(STORAGE_KEY);
+
+          if (savedTasks === null) {
+            return defaultTasks;
+          }
+
+          const parsedTasks = JSON.parse(savedTasks);
+          return Array.isArray(parsedTasks) ? parsedTasks : defaultTasks;
+        } catch (error) {
+          return defaultTasks;
+        }
+      }
+
+      function saveTasks() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        } catch (error) {
+          announce("Не удалось сохранить изменения в браузере.");
+        }
+      }
+
+      function createId() {
+        if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+          return crypto.randomUUID();
+        }
+
+        return `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function pluralizeTasks(value) {
+        const lastTwoDigits = value % 100;
+        const lastDigit = value % 10;
+
+        if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+          return "задач";
+        }
+
+        if (lastDigit === 1) {
+          return "задача";
+        }
+
+        if (lastDigit >= 2 && lastDigit <= 4) {
+          return "задачи";
+        }
+
+        return "задач";
+      }
+
+      function formatCreatedAt(timestamp) {
+        return new Intl.DateTimeFormat("ru-RU", {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(new Date(timestamp));
+      }
+
+      function createTaskElement(task) {
+        const item = document.createElement("li");
+        const content = document.createElement("div");
+        const title = document.createElement("p");
+        const meta = document.createElement("p");
+        const deleteButton = document.createElement("button");
+
+        item.className = "task-card";
+        item.dataset.taskId = task.id;
+
+        content.className = "task-card__content";
+        title.className = "task-card__title";
+        title.textContent = task.title;
+        meta.className = "task-card__meta";
+        meta.textContent = `Добавлено ${formatCreatedAt(task.createdAt)}`;
+
+        deleteButton.className = "icon-button";
+        deleteButton.type = "button";
+        deleteButton.dataset.action = "delete";
+        deleteButton.setAttribute("aria-label", `Удалить задачу «${task.title}»`);
+        deleteButton.innerHTML = `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 6h18"></path>
+            <path d="M8 6V4h8v2"></path>
+            <path d="M19 6l-1 14H6L5 6"></path>
+            <path d="M10 11v5M14 11v5"></path>
+          </svg>
+        `;
+
+        content.append(title, meta);
+        item.append(content, deleteButton);
+        return item;
+      }
+
+      function updateCounters() {
+        const total = tasks.length;
+        count.textContent = String(total);
+        summary.textContent = `${total} ${pluralizeTasks(total)}`;
+        emptyState.classList.toggle("is-visible", total === 0);
+      }
+
+      function renderTasks() {
+        const fragment = document.createDocumentFragment();
+
+        tasks.forEach((task) => {
+          fragment.append(createTaskElement(task));
+        });
+
+        list.replaceChildren(fragment);
+        updateCounters();
+      }
+
+      function announce(message) {
+        feedback.textContent = "";
+        window.setTimeout(() => {
+          feedback.textContent = message;
+        }, 20);
+      }
+
+      function addTask(title) {
+        const newTask = {
+          id: createId(),
+          title,
+          createdAt: Date.now()
+        };
+
+        tasks.unshift(newTask);
+        saveTasks();
+        list.prepend(createTaskElement(newTask));
+        updateCounters();
+        announce(`Задача «${title}» добавлена.`);
+      }
+
+      function removeTask(taskId, taskElement) {
+        const task = tasks.find((item) => item.id === taskId);
+
+        if (!task) {
+          return;
+        }
+
+        taskElement.classList.add("is-removing");
+
+        window.setTimeout(() => {
+          tasks = tasks.filter((item) => item.id !== taskId);
+          saveTasks();
+          taskElement.remove();
+          updateCounters();
+          announce(`Задача «${task.title}» удалена.`);
+        }, REMOVE_ANIMATION_MS);
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const title = input.value.trim();
+
+        if (!title) {
+          input.setAttribute("aria-invalid", "true");
+          input.focus();
+          announce("Введите название задачи.");
+          return;
+        }
+
+        input.removeAttribute("aria-invalid");
+        addTask(title);
+        form.reset();
+        input.focus();
+      });
+
+      input.addEventListener("input", () => {
+        if (input.value.trim()) {
+          input.removeAttribute("aria-invalid");
+        }
+      });
+
+      list.addEventListener("click", (event) => {
+        const deleteButton = event.target.closest("[data-action='delete']");
+
+        if (!deleteButton) {
+          return;
+        }
+
+        const taskElement = deleteButton.closest(".task-card");
+        removeTask(taskElement.dataset.taskId, taskElement);
+      });
+
+      renderTasks();
+    })();
+  </script>
+</body>
+</html>
