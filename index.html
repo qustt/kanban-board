@@ -60,7 +60,8 @@
     }
 
     button,
-    input {
+    input,
+    select {
       font: inherit;
     }
 
@@ -105,6 +106,7 @@
 
     .brand__mark svg,
     .icon-button svg,
+    .drag-handle svg,
     .primary-button svg,
     .empty-state svg {
       width: 18px;
@@ -158,7 +160,7 @@
     .composer {
       display: flex;
       gap: var(--space-3);
-      margin-bottom: var(--space-6);
+      margin-bottom: var(--space-4);
       padding: var(--space-4);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-xl);
@@ -194,6 +196,40 @@
     .task-input[aria-invalid="true"] {
       border-color: var(--color-danger);
       box-shadow: 0 0 0 3px rgba(157, 81, 75, 0.12);
+    }
+
+    .sort-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    .sort-toolbar label {
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .sort-select {
+      min-height: 40px;
+      padding: 8px 36px 8px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      outline: none;
+      background-color: var(--color-surface);
+      color: var(--color-text-primary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base);
+    }
+
+    .sort-select:focus-visible {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14);
     }
 
     .primary-button,
@@ -322,6 +358,35 @@
       transform: translateY(-4px) scale(0.97);
     }
 
+    .task-card.is-dragging {
+      position: fixed;
+      z-index: 1000;
+      margin: 0;
+      border-color: var(--color-accent);
+      box-shadow: 0 14px 32px rgba(41, 41, 39, 0.18);
+      opacity: 0.98;
+      pointer-events: none;
+      transition: none;
+      animation: none;
+      will-change: transform;
+    }
+
+    .task-placeholder {
+      border: 1px dashed rgba(115, 138, 120, 0.55);
+      border-radius: var(--radius-lg);
+      background: rgba(115, 138, 120, 0.08);
+    }
+
+    .task-list.is-dragging,
+    .task-list.is-dragging .drag-handle,
+    body.is-card-dragging {
+      cursor: grabbing;
+    }
+
+    .task-list.is-dragging .task-card {
+      will-change: transform;
+    }
+
     .task-card__content {
       min-width: 0;
       flex: 1;
@@ -341,6 +406,34 @@
       font-size: 0.75rem;
     }
 
+    .task-card__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .drag-handle {
+      display: grid;
+      width: 32px;
+      min-height: 44px;
+      flex: 0 0 auto;
+      margin-left: -6px;
+      place-items: center;
+      color: var(--color-text-secondary);
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      transition: color var(--transition-base);
+    }
+
+    .drag-handle:hover {
+      color: var(--color-text-primary);
+    }
+
+    .drag-handle[hidden] {
+      display: none;
+    }
+
     .icon-button {
       flex: 0 0 auto;
       border: 1px solid transparent;
@@ -349,6 +442,13 @@
     }
 
     .icon-button:hover {
+      transform: translateY(-1px);
+      border-color: var(--color-border);
+      background: var(--color-background);
+      color: var(--color-text-primary);
+    }
+
+    .delete-button:hover {
       transform: translateY(-1px);
       border-color: #f1d9d6;
       background: var(--color-danger-soft);
@@ -443,8 +543,18 @@
 
       .composer {
         flex-direction: column;
-        margin-bottom: var(--space-4);
         padding: var(--space-3);
+      }
+
+      .sort-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+      }
+
+      .sort-select {
+        width: 100%;
       }
 
       .primary-button {
@@ -457,6 +567,10 @@
 
       .task-card {
         padding: var(--space-3);
+      }
+
+      .task-card__actions {
+        gap: 0;
       }
     }
 
@@ -518,6 +632,15 @@
       </button>
     </form>
 
+    <div class="sort-toolbar">
+      <label for="sort-mode">Сортировка</label>
+      <select class="sort-select" id="sort-mode">
+        <option value="custom">Пользовательский порядок</option>
+        <option value="created">По дате создания — сначала новые</option>
+        <option value="title">По названию — от А до Я</option>
+      </select>
+    </div>
+
     <section class="board-column" aria-labelledby="column-title">
       <header class="column-header">
         <span class="status-dot" aria-hidden="true"></span>
@@ -545,7 +668,10 @@
   <script>
     (() => {
       const STORAGE_KEY = "todo-board.tasks.v1";
+      const SORT_STORAGE_KEY = "todo-board.sort.v1";
       const REMOVE_ANIMATION_MS = 300;
+      const REORDER_ANIMATION_MS = 180;
+      const SORT_MODES = new Set(["custom", "created", "title"]);
       const defaultTasks = [
         { id: "welcome-1", title: "Составить список задач на сегодня", createdAt: Date.now() - 120000 },
         { id: "welcome-2", title: "Определить главную задачу дня", createdAt: Date.now() - 60000 }
@@ -558,8 +684,21 @@
       const summary = document.querySelector("#task-summary");
       const emptyState = document.querySelector("#empty-state");
       const feedback = document.querySelector("#task-feedback");
+      const sortSelect = document.querySelector("#sort-mode");
 
       let tasks = loadTasks();
+      let sortMode = loadSortMode();
+      let draggedTaskId = null;
+      let draggedElement = null;
+      let draggedHandle = null;
+      let dragPlaceholder = null;
+      let dragPointerId = null;
+      let dragOriginLeft = 0;
+      let dragOriginTop = 0;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      let dragFrame = null;
+      let pendingPointerPosition = null;
 
       function loadTasks() {
         try {
@@ -581,6 +720,23 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
         } catch (error) {
           announce("Не удалось сохранить изменения в браузере.");
+        }
+      }
+
+      function loadSortMode() {
+        try {
+          const savedMode = localStorage.getItem(SORT_STORAGE_KEY);
+          return SORT_MODES.has(savedMode) ? savedMode : "custom";
+        } catch (error) {
+          return "custom";
+        }
+      }
+
+      function saveSortMode() {
+        try {
+          localStorage.setItem(SORT_STORAGE_KEY, sortMode);
+        } catch (error) {
+          announce("Не удалось сохранить выбранную сортировку в браузере.");
         }
       }
 
@@ -620,11 +776,29 @@
         }).format(new Date(timestamp));
       }
 
+      function createDragHandle() {
+        const handle = document.createElement("span");
+
+        handle.className = "drag-handle";
+        handle.hidden = sortMode !== "custom";
+        handle.title = "Перетащить задачу";
+        handle.setAttribute("aria-hidden", "true");
+        handle.innerHTML = `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path>
+          </svg>
+        `;
+
+        return handle;
+      }
+
       function createTaskElement(task) {
         const item = document.createElement("li");
+        const dragHandle = createDragHandle();
         const content = document.createElement("div");
         const title = document.createElement("p");
         const meta = document.createElement("p");
+        const actions = document.createElement("div");
         const deleteButton = document.createElement("button");
 
         item.className = "task-card";
@@ -636,7 +810,9 @@
         meta.className = "task-card__meta";
         meta.textContent = `Добавлено ${formatCreatedAt(task.createdAt)}`;
 
-        deleteButton.className = "icon-button";
+        actions.className = "task-card__actions";
+
+        deleteButton.className = "icon-button delete-button";
         deleteButton.type = "button";
         deleteButton.dataset.action = "delete";
         deleteButton.setAttribute("aria-label", `Удалить задачу «${task.title}»`);
@@ -650,8 +826,25 @@
         `;
 
         content.append(title, meta);
-        item.append(content, deleteButton);
+        actions.append(deleteButton);
+        item.append(dragHandle, content, actions);
         return item;
+      }
+
+      function getVisibleTasks() {
+        const visibleTasks = [...tasks];
+
+        if (sortMode === "created") {
+          return visibleTasks.sort((first, second) => second.createdAt - first.createdAt);
+        }
+
+        if (sortMode === "title") {
+          return visibleTasks.sort((first, second) =>
+            first.title.localeCompare(second.title, "ru", { sensitivity: "base" })
+          );
+        }
+
+        return visibleTasks;
       }
 
       function updateCounters() {
@@ -663,8 +856,9 @@
 
       function renderTasks() {
         const fragment = document.createDocumentFragment();
+        const visibleTasks = getVisibleTasks();
 
-        tasks.forEach((task) => {
+        visibleTasks.forEach((task) => {
           fragment.append(createTaskElement(task));
         });
 
@@ -688,8 +882,7 @@
 
         tasks.unshift(newTask);
         saveTasks();
-        list.prepend(createTaskElement(newTask));
-        updateCounters();
+        renderTasks();
         announce(`Задача «${title}» добавлена.`);
       }
 
@@ -705,10 +898,177 @@
         window.setTimeout(() => {
           tasks = tasks.filter((item) => item.id !== taskId);
           saveTasks();
-          taskElement.remove();
-          updateCounters();
+          renderTasks();
           announce(`Задача «${task.title}» удалена.`);
         }, REMOVE_ANIMATION_MS);
+      }
+
+      function animateCardReorder(reorderCards) {
+        const stationaryCards = [...list.querySelectorAll(".task-card")];
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        if (prefersReducedMotion || !stationaryCards.every((taskElement) => taskElement.animate)) {
+          reorderCards();
+          return;
+        }
+
+        const previousPositions = new Map();
+
+        stationaryCards.forEach((taskElement) => {
+          previousPositions.set(taskElement, taskElement.getBoundingClientRect().top);
+        });
+
+        stationaryCards.forEach((taskElement) => {
+          taskElement.getAnimations().forEach((animation) => animation.cancel());
+        });
+
+        reorderCards();
+
+        stationaryCards.forEach((taskElement) => {
+          const offset = previousPositions.get(taskElement) - taskElement.getBoundingClientRect().top;
+
+          if (Math.abs(offset) < 1) {
+            return;
+          }
+
+          taskElement.animate(
+            [
+              { transform: `translateY(${offset}px)` },
+              { transform: "translateY(0)" }
+            ],
+            {
+              duration: REORDER_ANIMATION_MS,
+              easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+            }
+          );
+        });
+      }
+
+      function moveDragPlaceholder(pointerY) {
+        const stationaryCards = [...list.querySelectorAll(".task-card")];
+        const referenceElement = stationaryCards.find((taskElement) => {
+          const bounds = taskElement.getBoundingClientRect();
+          return pointerY < bounds.top + bounds.height / 2;
+        }) ?? null;
+
+        if (referenceElement) {
+          if (dragPlaceholder.nextElementSibling !== referenceElement) {
+            animateCardReorder(() => list.insertBefore(dragPlaceholder, referenceElement));
+          }
+          return;
+        }
+
+        if (dragPlaceholder.nextElementSibling) {
+          animateCardReorder(() => list.append(dragPlaceholder));
+        }
+      }
+
+      function updateDraggedCard() {
+        dragFrame = null;
+
+        if (!draggedElement || !pendingPointerPosition) {
+          return;
+        }
+
+        const { clientX, clientY } = pendingPointerPosition;
+        const offsetX = clientX - dragOffsetX - dragOriginLeft;
+        const offsetY = clientY - dragOffsetY - dragOriginTop;
+
+        pendingPointerPosition = null;
+        draggedElement.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) rotate(0.5deg)`;
+        moveDragPlaceholder(clientY);
+      }
+
+      function clearDraggedCardStyles() {
+        draggedElement.classList.remove("is-dragging");
+        draggedElement.style.removeProperty("width");
+        draggedElement.style.removeProperty("height");
+        draggedElement.style.removeProperty("left");
+        draggedElement.style.removeProperty("top");
+        draggedElement.style.removeProperty("transform");
+      }
+
+      function saveDraggedOrder() {
+        const tasksById = new Map(tasks.map((task) => [task.id, task]));
+        const orderedTasks = [...list.querySelectorAll(".task-card")]
+          .map((taskElement) => tasksById.get(taskElement.dataset.taskId))
+          .filter(Boolean);
+
+        if (orderedTasks.length !== tasks.length) {
+          return false;
+        }
+
+        tasks = orderedTasks;
+        saveTasks();
+        return true;
+      }
+
+      function finishDragging(shouldSave) {
+        if (!draggedElement) {
+          return;
+        }
+
+        if (dragFrame !== null) {
+          window.cancelAnimationFrame(dragFrame);
+          dragFrame = null;
+        }
+
+        if (pendingPointerPosition) {
+          updateDraggedCard();
+        }
+
+        if (draggedHandle?.hasPointerCapture(dragPointerId)) {
+          draggedHandle.releasePointerCapture(dragPointerId);
+        }
+
+        const movedTask = tasks.find((task) => task.id === draggedTaskId);
+
+        if (shouldSave) {
+          const draggedBounds = draggedElement.getBoundingClientRect();
+          dragPlaceholder.replaceWith(draggedElement);
+          clearDraggedCardStyles();
+          const settledBounds = draggedElement.getBoundingClientRect();
+          const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+          if (!prefersReducedMotion && draggedElement.animate) {
+            draggedElement.animate(
+              [
+                {
+                  transform: `translate(${draggedBounds.left - settledBounds.left}px, ${draggedBounds.top - settledBounds.top}px) rotate(0.5deg)`,
+                  boxShadow: "0 14px 32px rgba(41, 41, 39, 0.18)"
+                },
+                {
+                  transform: "translate(0, 0) rotate(0)",
+                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)"
+                }
+              ],
+              {
+                duration: REORDER_ANIMATION_MS,
+                easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+              }
+            );
+          }
+
+          if (saveDraggedOrder()) {
+            announce(`Задача «${movedTask.title}» перемещена.`);
+          } else {
+            renderTasks();
+          }
+        } else {
+          draggedElement.remove();
+          dragPlaceholder.remove();
+          renderTasks();
+        }
+
+        document.body.classList.remove("is-card-dragging");
+        list.classList.remove("is-dragging");
+        draggedTaskId = null;
+        draggedElement = null;
+        draggedHandle = null;
+        dragPlaceholder = null;
+        dragPointerId = null;
+        dragFrame = null;
+        pendingPointerPosition = null;
       }
 
       form.addEventListener("submit", (event) => {
@@ -743,6 +1103,95 @@
 
         const taskElement = deleteButton.closest(".task-card");
         removeTask(taskElement.dataset.taskId, taskElement);
+      });
+
+      list.addEventListener("pointerdown", (event) => {
+        const dragHandle = event.target.closest(".drag-handle");
+
+        if (
+          !dragHandle ||
+          sortMode !== "custom" ||
+          event.button !== 0 ||
+          draggedElement
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        const taskElement = dragHandle.closest(".task-card");
+        const bounds = taskElement.getBoundingClientRect();
+
+        draggedTaskId = taskElement.dataset.taskId;
+        draggedElement = taskElement;
+        draggedHandle = dragHandle;
+        dragPointerId = event.pointerId;
+        dragOriginLeft = bounds.left;
+        dragOriginTop = bounds.top;
+        dragOffsetX = event.clientX - bounds.left;
+        dragOffsetY = event.clientY - bounds.top;
+
+        dragPlaceholder = document.createElement("li");
+        dragPlaceholder.className = "task-placeholder";
+        dragPlaceholder.style.height = `${bounds.height}px`;
+        dragPlaceholder.setAttribute("aria-hidden", "true");
+        list.insertBefore(dragPlaceholder, taskElement);
+
+        draggedElement.classList.add("is-dragging");
+        draggedElement.style.width = `${bounds.width}px`;
+        draggedElement.style.height = `${bounds.height}px`;
+        draggedElement.style.left = `${bounds.left}px`;
+        draggedElement.style.top = `${bounds.top}px`;
+        draggedElement.style.transform = "translate3d(0, 0, 0) rotate(0.5deg)";
+        document.body.append(draggedElement);
+        draggedHandle.setPointerCapture(dragPointerId);
+        document.body.classList.add("is-card-dragging");
+        list.classList.add("is-dragging");
+      });
+
+      window.addEventListener("pointermove", (event) => {
+        if (!draggedElement || event.pointerId !== dragPointerId) {
+          return;
+        }
+
+        event.preventDefault();
+        pendingPointerPosition = {
+          clientX: event.clientX,
+          clientY: event.clientY
+        };
+
+        if (dragFrame === null) {
+          dragFrame = window.requestAnimationFrame(updateDraggedCard);
+        }
+      }, { passive: false });
+
+      window.addEventListener("pointerup", (event) => {
+        if (draggedElement && event.pointerId === dragPointerId) {
+          finishDragging(true);
+        }
+      });
+
+      window.addEventListener("pointercancel", (event) => {
+        if (draggedElement && event.pointerId === dragPointerId) {
+          finishDragging(false);
+        }
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && draggedElement) {
+          finishDragging(false);
+        }
+      });
+
+      sortSelect.value = sortMode;
+      sortSelect.addEventListener("change", () => {
+        if (draggedElement) {
+          finishDragging(false);
+        }
+
+        sortMode = SORT_MODES.has(sortSelect.value) ? sortSelect.value : "custom";
+        saveSortMode();
+        renderTasks();
+        announce(`Сортировка: ${sortSelect.options[sortSelect.selectedIndex].text}.`);
       });
 
       renderTasks();
