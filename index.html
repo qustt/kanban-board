@@ -180,7 +180,6 @@
       transition: border-color var(--transition), background var(--transition);
     }
 
-    .column.is-over { border-color: rgba(115, 138, 120, 0.65); background: rgba(115, 138, 120, 0.07); }
     .column-header { display: flex; min-height: 28px; align-items: center; gap: 8px; margin-bottom: 12px; }
     .column-header h3 { margin: 0; font-size: 0.875rem; font-weight: 600; }
 
@@ -217,6 +216,8 @@
       list-style: none;
     }
 
+    .task-list:empty { min-height: 0; }
+
     .task-card {
       display: flex;
       align-items: flex-start;
@@ -236,6 +237,7 @@
     .task-card.is-important { border-color: var(--important-border); background: var(--important); }
     .task-card:hover { transform: translateY(-2px); border-color: #deded8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
     .task-card.is-important:hover { border-color: #d9bd4c; }
+    .task-card.drop-before { box-shadow: 0 -3px 0 var(--accent), 0 1px 2px rgba(0, 0, 0, 0.04); }
     .task-card.is-dragging { opacity: 0.45; transform: scale(1.02); cursor: grabbing; }
     .task-card.is-removing { pointer-events: none; opacity: 0; transform: translateY(-4px) scale(0.97); }
     .task-content { min-width: 0; flex: 1; }
@@ -315,18 +317,16 @@
       min-height: 240px;
       flex: 1;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       flex-direction: column;
-      margin-top: 4px;
-      padding: 32px 16px;
-      border: 1px dashed #d9d9d3;
-      border-radius: 10px;
+      margin: 0;
+      padding: 16px;
       color: var(--muted);
       text-align: center;
     }
 
     .empty.is-visible { display: flex; }
-    .empty-icon { display: grid; width: 42px; height: 42px; margin-bottom: 12px; place-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--accent); }
+    .empty-icon { display: grid; width: 42px; height: 42px; margin-bottom: 12px; place-items: center; color: var(--accent); }
     .empty strong { color: var(--text); font-size: 0.875rem; }
     .empty p { max-width: 220px; margin: 4px 0 0; font-size: 0.8125rem; }
 
@@ -484,6 +484,7 @@
       const feedback = document.querySelector("#feedback");
       const board = document.querySelector(".board");
       let draggedId = null;
+      let dropBeforeId = null;
       let wasDragging = false;
       let editingTaskId = null;
       let tasks = load();
@@ -585,21 +586,101 @@
 
       function render() {
         STATUSES.forEach((status) => {
-          const statusTasks = tasks.filter((task) => task.status === status);
+          const columnTasks = tasks.filter((task) => task.status === status);
+          const statusTasks = [
+            ...columnTasks.filter((task) => task.priority === "high"),
+            ...columnTasks.filter((task) => task.priority !== "high")
+          ];
           document.querySelector(`[data-list="${status}"]`).replaceChildren(...statusTasks.map(createCard));
-          document.querySelector(`[data-count="${status}"]`).textContent = statusTasks.length;
-          document.querySelector(`[data-empty="${status}"]`).classList.toggle("is-visible", statusTasks.length === 0);
+        });
+        updateBoardMeta();
+      }
+
+      function updateBoardMeta() {
+        STATUSES.forEach((status) => {
+          const taskCount = tasks.filter((task) => task.status === status).length;
+          document.querySelector(`[data-count="${status}"]`).textContent = taskCount;
+          document.querySelector(`[data-empty="${status}"]`).classList.toggle("is-visible", taskCount === 0);
         });
         summary.textContent = `${tasks.length} всего · ${tasks.filter((task) => task.status === "done").length} готово`;
       }
 
-      function moveTask(id, status) {
-        const task = tasks.find((item) => item.id === id);
-        if (!task || task.status === status) return;
+      function moveTask(id, status, beforeId = null) {
+        const taskIndex = tasks.findIndex((item) => item.id === id);
+        if (taskIndex === -1) return;
+
+        const task = tasks[taskIndex];
+        const card = [...board.querySelectorAll(".task-card")].find((item) => item.dataset.id === id);
+        const previousStatus = task.status;
+        if (task.priority === "high" && previousStatus === status) {
+          announce("Важные задачи закреплены в начале колонки.");
+          return;
+        }
+
+        tasks.splice(taskIndex, 1);
         task.status = status;
+
+        let insertIndex = tasks.length;
+        if (task.priority === "high") {
+          const firstTaskInColumn = tasks.find((item) => item.status === status);
+          if (firstTaskInColumn) insertIndex = tasks.indexOf(firstTaskInColumn);
+        } else {
+          const beforeTask = tasks.find((item) => item.id === beforeId && item.status === status && item.priority !== "high");
+          if (beforeTask) {
+            insertIndex = tasks.indexOf(beforeTask);
+          } else {
+            const targetTasks = tasks.filter((item) => item.status === status);
+            if (targetTasks.length) insertIndex = tasks.lastIndexOf(targetTasks.at(-1)) + 1;
+          }
+        }
+
+        tasks.splice(insertIndex, 0, task);
         save();
-        render();
-        announce(`Задача «${task.title}» перемещена в колонку «${LABELS[status]}».`);
+
+        if (card) {
+          const targetList = document.querySelector(`[data-list="${status}"]`);
+          let beforeCard = null;
+
+          if (task.priority === "high") {
+            beforeCard = targetList.querySelector(".task-card");
+          } else if (beforeId) {
+            beforeCard = [...targetList.querySelectorAll(".task-card")]
+              .find((item) => item.dataset.id === beforeId) ?? null;
+          }
+
+          targetList.insertBefore(card, beforeCard);
+          card.setAttribute("aria-label", `${task.title}. Приоритет: ${PRIORITY_LABELS[task.priority]}. Статус: ${LABELS[task.status]}`);
+          updateBoardMeta();
+        } else {
+          render();
+        }
+
+        announce(previousStatus === status
+          ? `Порядок задач в колонке «${LABELS[status]}» изменён.`
+          : `Задача «${task.title}» перемещена в колонку «${LABELS[status]}».`);
+      }
+
+      function clearDropIndicators() {
+        board.querySelectorAll(".drop-before").forEach((card) => card.classList.remove("drop-before"));
+        dropBeforeId = null;
+      }
+
+      function updateDropPosition(column, pointerY) {
+        clearDropIndicators();
+        const draggedTask = tasks.find((task) => task.id === draggedId);
+        if (!draggedTask || draggedTask.priority === "high") return;
+
+        const candidates = [...column.querySelectorAll(".task-card:not(.is-dragging)")]
+          .filter((card) => tasks.find((task) => task.id === card.dataset.id)?.priority !== "high");
+        const beforeCard = candidates.find((card) => {
+          const rect = card.getBoundingClientRect();
+          return pointerY < rect.top + rect.height / 2;
+        });
+
+        if (beforeCard) {
+          dropBeforeId = beforeCard.dataset.id;
+          beforeCard.classList.add("drop-before");
+        }
       }
 
       form.addEventListener("submit", (event) => {
@@ -710,19 +791,22 @@
         const column = event.target.closest(".column");
         if (!column || !draggedId) return;
         event.preventDefault();
-        document.querySelectorAll(".column").forEach((item) => item.classList.toggle("is-over", item === column));
+        updateDropPosition(column, event.clientY);
       });
 
       board.addEventListener("drop", (event) => {
         const column = event.target.closest(".column");
         if (!column || !draggedId) return;
         event.preventDefault();
-        moveTask(draggedId, column.dataset.status);
+        const taskId = draggedId;
+        const beforeId = dropBeforeId;
+        clearDropIndicators();
+        moveTask(taskId, column.dataset.status, beforeId);
       });
 
       board.addEventListener("dragend", (event) => {
         event.target.closest(".task-card")?.classList.remove("is-dragging");
-        document.querySelectorAll(".column").forEach((column) => column.classList.remove("is-over"));
+        clearDropIndicators();
         draggedId = null;
         setTimeout(() => { wasDragging = false; }, 150);
       });
