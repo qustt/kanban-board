@@ -17,6 +17,8 @@
       --done: #ddeedc;
       --accent: #738a78;
       --danger: #9d514b;
+      --important: #fff2b8;
+      --important-border: #ead16d;
       --radius: 12px;
       --transition: 0.3s ease;
     }
@@ -35,7 +37,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    button, input, select { font: inherit; }
+    button, input, select, textarea { font: inherit; }
     button, select { cursor: pointer; }
 
     .container {
@@ -95,7 +97,7 @@
 
     .composer {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) 180px auto;
+      grid-template-columns: auto minmax(220px, 1fr) auto;
       gap: 12px;
       margin-bottom: 24px;
       padding: 16px;
@@ -122,7 +124,7 @@
     .field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14); }
     .field[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(157, 81, 75, 0.12); }
 
-    .add-button, .delete-button {
+    .add-button, .secondary-button, .delete-button, .modal-close {
       display: inline-flex;
       min-width: 44px;
       min-height: 44px;
@@ -143,8 +145,20 @@
     }
 
     .add-button:hover { transform: translateY(-1px); background: #657b6a; box-shadow: 0 4px 12px rgba(71, 88, 75, 0.14); }
-    .add-button:active, .delete-button:active { transform: scale(0.97); }
-    .add-button:focus-visible, .delete-button:focus-visible, .task-card:focus-visible { outline: 3px solid rgba(115, 138, 120, 0.3); outline-offset: 2px; }
+    .add-button:active, .secondary-button:active, .delete-button:active, .modal-close:active { transform: scale(0.97); }
+    .add-button:focus-visible, .secondary-button:focus-visible, .delete-button:focus-visible, .modal-close:focus-visible, .task-card:focus-visible { outline: 3px solid rgba(115, 138, 120, 0.3); outline-offset: 2px; }
+
+    .secondary-button {
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .secondary-button:hover { transform: translateY(-1px); border-color: #d5d5ce; background: #fafaf8; }
 
     .board-scroll { width: 100%; overflow-x: auto; padding-bottom: 8px; scrollbar-color: #cfcfc8 transparent; }
 
@@ -219,24 +233,82 @@
       transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), opacity var(--transition);
     }
 
+    .task-card.is-important { border-color: var(--important-border); background: var(--important); }
     .task-card:hover { transform: translateY(-2px); border-color: #deded8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
+    .task-card.is-important:hover { border-color: #d9bd4c; }
     .task-card.is-dragging { opacity: 0.45; transform: scale(1.02); cursor: grabbing; }
     .task-card.is-removing { pointer-events: none; opacity: 0; transform: translateY(-4px) scale(0.97); }
     .task-content { min-width: 0; flex: 1; }
     .task-title { margin: 0; overflow-wrap: anywhere; font-size: 0.875rem; font-weight: 550; }
     .task-meta { margin: 4px 0 0; color: var(--muted); font-size: 0.75rem; }
 
+    .card-actions {
+      display: flex;
+      flex: none;
+      align-items: center;
+      flex-direction: column;
+      gap: 2px;
+      margin: -4px -8px 0 0;
+    }
+
+    .priority-icon {
+      display: grid;
+      width: 40px;
+      height: 22px;
+      place-items: center;
+      color: #77766f;
+    }
+
+    .priority-icon svg { width: 17px; height: 17px; stroke-width: 2; }
+    .priority-icon[data-priority="high"] { color: #9b7400; }
+    .priority-icon[data-priority="low"] { color: #7c8c83; }
+
     .delete-button {
       width: 40px;
       min-width: 40px;
       min-height: 40px;
-      margin: -8px -8px 0 0;
       border: 1px solid transparent;
       background: transparent;
       color: var(--muted);
     }
 
     .delete-button:hover { transform: translateY(-1px); border-color: #f1d9d6; background: #fbefed; color: var(--danger); }
+
+    .task-dialog {
+      width: min(calc(100% - 32px), 560px);
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 24px 70px rgba(42, 42, 38, 0.2);
+    }
+
+    .task-dialog::backdrop { background: rgba(30, 31, 29, 0.42); backdrop-filter: blur(2px); }
+
+    .detail-form { padding: 24px; }
+    .dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .dialog-header h2 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; }
+
+    .modal-close {
+      width: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      padding: 0;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .modal-close:hover { border-color: var(--border); background: var(--bg); color: var(--text); }
+    .modal-close svg { width: 20px; height: 20px; }
+
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: grid; gap: 7px; }
+    .form-group-wide { grid-column: 1 / -1; }
+    .form-label { font-size: 0.8125rem; font-weight: 600; }
+    textarea.field { min-height: 112px; resize: vertical; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 
     .empty {
       display: none;
@@ -271,9 +343,13 @@
       main { padding-block: 24px 32px; }
       .intro { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 16px; }
       .composer { grid-template-columns: 1fr; padding: 12px; margin-bottom: 16px; }
-      .add-button { width: 100%; }
+      .add-button, .secondary-button { width: 100%; }
       .board { min-width: 840px; }
       .column { min-height: 380px; padding: 12px; }
+      .detail-form { padding: 20px; }
+      .modal-grid { grid-template-columns: 1fr; }
+      .form-group-wide { grid-column: auto; }
+      .dialog-actions .add-button, .dialog-actions .secondary-button { width: auto; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -303,14 +379,12 @@
     </section>
 
     <form class="composer" id="task-form" novalidate>
+      <button class="secondary-button" id="open-detail" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path></svg>
+        Уточнить задачу
+      </button>
       <label class="sr-only" for="task-input">Название новой задачи</label>
       <input class="field" id="task-input" maxlength="120" autocomplete="off" placeholder="Например, подготовить план на неделю" required>
-      <label class="sr-only" for="task-status">Статус новой задачи</label>
-      <select class="field" id="task-status">
-        <option value="inbox">Не разобрано</option>
-        <option value="progress">В работе</option>
-        <option value="done">Готово</option>
-      </select>
       <button class="add-button" type="submit">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
         Добавить задачу
@@ -342,23 +416,76 @@
     <p class="sr-only" id="feedback" role="status" aria-live="polite"></p>
   </main>
 
+  <dialog class="task-dialog" id="task-dialog" aria-labelledby="dialog-title">
+    <form class="detail-form" id="detail-form" method="dialog" novalidate>
+      <header class="dialog-header">
+        <h2 id="dialog-title">Новая задача</h2>
+        <button class="modal-close" type="button" data-action="close-dialog" aria-label="Закрыть окно">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+      </header>
+      <div class="modal-grid">
+        <label class="form-group form-group-wide">
+          <span class="form-label">Название</span>
+          <input class="field" id="detail-title" maxlength="120" autocomplete="off" required>
+        </label>
+        <label class="form-group form-group-wide">
+          <span class="form-label">Описание</span>
+          <textarea class="field" id="detail-description" maxlength="1000" placeholder="Добавьте детали задачи"></textarea>
+        </label>
+        <label class="form-group">
+          <span class="form-label">Приоритет</span>
+          <select class="field" id="detail-priority">
+            <option value="high">Важная</option>
+            <option value="normal" selected>Обычная</option>
+            <option value="low">Низкая</option>
+          </select>
+        </label>
+        <label class="form-group">
+          <span class="form-label">Статус</span>
+          <select class="field" id="detail-status">
+            <option value="inbox">Не разобрано</option>
+            <option value="progress">В работе</option>
+            <option value="done">Готово</option>
+          </select>
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button class="secondary-button" type="button" data-action="close-dialog">Отмена</button>
+        <button class="add-button" id="detail-submit" type="submit">Создать задачу</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     (() => {
       const STORAGE_KEY = "todo-board.kanban.v1";
       const STATUSES = ["inbox", "progress", "done"];
+      const PRIORITIES = ["high", "normal", "low"];
       const LABELS = { inbox: "Не разобрано", progress: "В работе", done: "Готово" };
+      const PRIORITY_LABELS = { high: "Важная", normal: "Обычная", low: "Низкая" };
       const defaults = [
-        { id: "welcome-1", title: "Собрать задачи на неделю", status: "inbox", createdAt: Date.now() - 120000 },
-        { id: "welcome-2", title: "Подготовить черновик презентации", status: "progress", createdAt: Date.now() - 60000 }
+        { id: "welcome-1", title: "Собрать задачи на неделю", description: "", priority: "normal", status: "inbox", createdAt: Date.now() - 120000 },
+        { id: "welcome-2", title: "Подготовить черновик презентации", description: "", priority: "normal", status: "progress", createdAt: Date.now() - 60000 }
       ];
 
       const form = document.querySelector("#task-form");
       const input = document.querySelector("#task-input");
-      const statusInput = document.querySelector("#task-status");
+      const openDetailButton = document.querySelector("#open-detail");
+      const dialog = document.querySelector("#task-dialog");
+      const dialogTitle = document.querySelector("#dialog-title");
+      const detailForm = document.querySelector("#detail-form");
+      const detailTitle = document.querySelector("#detail-title");
+      const detailDescription = document.querySelector("#detail-description");
+      const detailPriority = document.querySelector("#detail-priority");
+      const detailStatus = document.querySelector("#detail-status");
+      const detailSubmit = document.querySelector("#detail-submit");
       const summary = document.querySelector("#summary");
       const feedback = document.querySelector("#feedback");
       const board = document.querySelector(".board");
       let draggedId = null;
+      let wasDragging = false;
+      let editingTaskId = null;
       let tasks = load();
 
       function load() {
@@ -367,7 +494,13 @@
           if (saved === null) return defaults.map((task) => ({ ...task }));
           const parsed = JSON.parse(saved);
           return Array.isArray(parsed)
-            ? parsed.filter((task) => task && typeof task.id === "string" && typeof task.title === "string" && STATUSES.includes(task.status))
+            ? parsed
+                .filter((task) => task && typeof task.id === "string" && typeof task.title === "string" && STATUSES.includes(task.status))
+                .map((task) => ({
+                  ...task,
+                  description: typeof task.description === "string" ? task.description : "",
+                  priority: PRIORITIES.includes(task.priority) ? task.priority : "normal"
+                }))
             : defaults.map((task) => ({ ...task }));
         } catch { return defaults.map((task) => ({ ...task })); }
       }
@@ -392,10 +525,11 @@
       function createCard(task) {
         const card = document.createElement("li");
         card.className = "task-card";
+        card.classList.toggle("is-important", task.priority === "high");
         card.dataset.id = task.id;
         card.draggable = true;
         card.tabIndex = 0;
-        card.setAttribute("aria-label", `${task.title}. Статус: ${LABELS[task.status]}`);
+        card.setAttribute("aria-label", `${task.title}. Приоритет: ${PRIORITY_LABELS[task.priority]}. Статус: ${LABELS[task.status]}`);
 
         const content = document.createElement("div");
         content.className = "task-content";
@@ -407,14 +541,46 @@
         meta.textContent = `Добавлено ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(new Date(task.createdAt))}`;
         content.append(title, meta);
 
+        const priority = document.createElement("span");
+        priority.className = "priority-icon";
+        priority.dataset.priority = task.priority;
+        priority.setAttribute("aria-label", `Приоритет: ${PRIORITY_LABELS[task.priority]}`);
+        const priorityIcons = {
+          high: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 15 5-5 5 5"></path><path d="m7 10 5-5 5 5"></path></svg>',
+          normal: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 12h10"></path></svg>',
+          low: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>'
+        };
+        priority.innerHTML = priorityIcons[task.priority];
+
         const remove = document.createElement("button");
         remove.className = "delete-button";
         remove.type = "button";
         remove.dataset.action = "delete";
         remove.setAttribute("aria-label", `Удалить задачу «${task.title}»`);
         remove.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"></path></svg>';
-        card.append(content, remove);
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+        actions.append(priority, remove);
+        card.append(content, actions);
         return card;
+      }
+
+      function openTaskDialog(task = null) {
+        editingTaskId = task?.id ?? null;
+        dialogTitle.textContent = task ? "Редактировать задачу" : "Новая задача";
+        detailSubmit.textContent = task ? "Сохранить" : "Создать задачу";
+        detailTitle.value = task?.title ?? input.value.trim();
+        detailDescription.value = task?.description ?? "";
+        detailPriority.value = task?.priority ?? "normal";
+        detailStatus.value = task?.status ?? "inbox";
+        detailTitle.removeAttribute("aria-invalid");
+        dialog.showModal();
+        detailTitle.focus();
+      }
+
+      function closeTaskDialog() {
+        dialog.close();
+        editingTaskId = null;
       }
 
       function render() {
@@ -445,7 +611,7 @@
           announce("Введите название задачи.");
           return;
         }
-        tasks.push({ id: createId(), title, status: statusInput.value, createdAt: Date.now() });
+        tasks.push({ id: createId(), title, description: "", priority: "normal", status: "inbox", createdAt: Date.now() });
         input.removeAttribute("aria-invalid");
         save();
         render();
@@ -456,24 +622,85 @@
 
       input.addEventListener("input", () => { if (input.value.trim()) input.removeAttribute("aria-invalid"); });
 
+      openDetailButton.addEventListener("click", () => openTaskDialog());
+
+      detailForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const title = detailTitle.value.trim();
+        if (!title) {
+          detailTitle.setAttribute("aria-invalid", "true");
+          detailTitle.focus();
+          announce("Введите название задачи.");
+          return;
+        }
+
+        const taskData = {
+          title,
+          description: detailDescription.value.trim(),
+          priority: detailPriority.value,
+          status: detailStatus.value
+        };
+        const existingTask = tasks.find((task) => task.id === editingTaskId);
+
+        if (existingTask) {
+          Object.assign(existingTask, taskData);
+        } else {
+          tasks.push({ id: createId(), ...taskData, createdAt: Date.now() });
+          input.value = "";
+          input.removeAttribute("aria-invalid");
+        }
+
+        save();
+        render();
+        closeTaskDialog();
+        announce(existingTask ? `Задача «${title}» обновлена.` : `Задача «${title}» добавлена.`);
+      });
+
+      detailTitle.addEventListener("input", () => { if (detailTitle.value.trim()) detailTitle.removeAttribute("aria-invalid"); });
+
+      dialog.querySelectorAll('[data-action="close-dialog"]').forEach((button) => {
+        button.addEventListener("click", closeTaskDialog);
+      });
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) closeTaskDialog();
+      });
+
+      dialog.addEventListener("cancel", () => { editingTaskId = null; });
+
       board.addEventListener("click", (event) => {
         const button = event.target.closest('[data-action="delete"]');
-        if (!button) return;
-        const card = button.closest(".task-card");
+        if (button) {
+          const card = button.closest(".task-card");
+          const task = tasks.find((item) => item.id === card.dataset.id);
+          card.classList.add("is-removing");
+          tasks = tasks.filter((item) => item.id !== card.dataset.id);
+          save();
+          setTimeout(() => {
+            render();
+            announce(`Задача «${task.title}» удалена.`);
+          }, 300);
+          return;
+        }
+
+        const card = event.target.closest(".task-card");
+        if (!card || wasDragging) return;
         const task = tasks.find((item) => item.id === card.dataset.id);
-        card.classList.add("is-removing");
-        tasks = tasks.filter((item) => item.id !== card.dataset.id);
-        save();
-        setTimeout(() => {
-          render();
-          announce(`Задача «${task.title}» удалена.`);
-        }, 300);
+        if (task) openTaskDialog(task);
+      });
+
+      board.addEventListener("keydown", (event) => {
+        if (!event.target.matches(".task-card") || !["Enter", " "].includes(event.key)) return;
+        event.preventDefault();
+        const task = tasks.find((item) => item.id === event.target.dataset.id);
+        if (task) openTaskDialog(task);
       });
 
       board.addEventListener("dragstart", (event) => {
         const card = event.target.closest(".task-card");
         if (!card) return;
         draggedId = card.dataset.id;
+        wasDragging = true;
         card.classList.add("is-dragging");
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", draggedId);
@@ -497,6 +724,7 @@
         event.target.closest(".task-card")?.classList.remove("is-dragging");
         document.querySelectorAll(".column").forEach((column) => column.classList.remove("is-over"));
         draggedId = null;
+        setTimeout(() => { wasDragging = false; }, 150);
       });
 
       render();
