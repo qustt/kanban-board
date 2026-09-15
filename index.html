@@ -6,6 +6,14 @@
   <meta name="description" content="Канбан-доска для повседневных задач">
   <title>To-Do Board</title>
   <style>
+    @font-face {
+      font-family: "TikTok Sans";
+      src: url("assets/fonts/TikTokSans-Variable.woff2") format("woff2");
+      font-weight: 300 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
     :root {
       --bg: #f7f7f5;
       --surface: #fff;
@@ -32,7 +40,7 @@
       overflow-x: hidden;
       background: var(--bg);
       color: var(--text);
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "TikTok Sans", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
@@ -56,19 +64,9 @@
       align-items: center;
     }
 
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
-
-    .brand-mark {
-      display: grid;
-      width: 36px;
-      height: 36px;
-      place-items: center;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--accent);
-    }
+    .brand { display: flex; align-items: center; }
+    .brand-title { margin: 0; line-height: 0; }
+    .brand-logo { display: block; width: auto; height: 36px; object-fit: contain; }
 
     svg {
       width: 18px;
@@ -234,9 +232,7 @@
       transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), opacity var(--transition);
     }
 
-    .task-card.is-important { border-color: var(--important-border); background: var(--important); }
     .task-card:hover { transform: translateY(-2px); border-color: #deded8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
-    .task-card.is-important:hover { border-color: #d9bd4c; }
     .task-card.drop-before { box-shadow: 0 -3px 0 var(--accent), 0 1px 2px rgba(0, 0, 0, 0.04); }
     .task-card.is-dragging { opacity: 0.45; transform: scale(1.02); cursor: grabbing; }
     .task-card.is-removing { pointer-events: none; opacity: 0; transform: translateY(-4px) scale(0.97); }
@@ -260,7 +256,6 @@
     .task-deadline svg { width: 14px; height: 14px; }
     .task-deadline.is-today { background: #f8dfd4; color: #8b443b; }
     .task-deadline.is-overdue { background: #f6e8e6; color: var(--danger); }
-    .task-card.is-important .task-deadline { background: rgba(255, 255, 255, 0.62); }
 
     .card-actions {
       display: flex;
@@ -280,7 +275,15 @@
     }
 
     .priority-icon svg { width: 17px; height: 17px; stroke-width: 2; }
-    .priority-icon[data-priority="high"] { color: #9b7400; }
+    .priority-icon[data-priority="high"] {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--important-border);
+      border-radius: 7px;
+      background: var(--important);
+      color: #8a6800;
+      box-shadow: 0 2px 6px rgba(169, 127, 31, 0.1);
+    }
     .priority-icon[data-priority="low"] { color: #7c8c83; }
 
     .delete-button, .restore-button {
@@ -429,6 +432,14 @@
     }
 
     .empty.is-visible { display: flex; }
+    .empty.is-entering {
+      animation: empty-status-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .empty.is-leaving {
+      display: flex;
+      pointer-events: none;
+      animation: empty-status-out 0.2s ease-in both;
+    }
     .empty-icon { display: grid; width: 42px; height: 42px; margin-bottom: 12px; place-items: center; color: var(--accent); }
     .empty strong { color: var(--text); font-size: 0.875rem; }
     .empty p { max-width: 220px; margin: 4px 0 0; font-size: 0.8125rem; }
@@ -438,6 +449,16 @@
     @keyframes card-enter {
       from { opacity: 0; transform: translateY(-6px) scale(0.98); }
       to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes empty-status-in {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes empty-status-out {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(-8px) scale(0.98); }
     }
 
     @media (max-width: 767px) {
@@ -464,24 +485,396 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
+
+    /* Visual refresh: calm editorial workspace inspired by the reference. */
+    :root {
+      --bg: #f8f8f5;
+      --surface: rgba(255, 255, 255, 0.88);
+      --text: #111c36;
+      --muted: #768096;
+      --border: #e6e9e5;
+      --backlog: #eeefec;
+      --progress: #fff1cc;
+      --done: #e4f5ed;
+      --accent: #71977f;
+      --danger: #a65d55;
+      --important: #fff8d9;
+      --important-border: #f1d578;
+      --radius: 15px;
+      --transition: 0.22s ease;
+    }
+
+    body {
+      position: relative;
+      background:
+        radial-gradient(circle at 10% 6%, rgba(248, 239, 225, 0.52), transparent 24%),
+        radial-gradient(circle at 91% 35%, rgba(218, 230, 218, 0.36), transparent 25%),
+        #fafaf7;
+      color: var(--text);
+    }
+
+    body::before,
+    body::after {
+      position: fixed;
+      z-index: -1;
+      content: "";
+      pointer-events: none;
+    }
+
+    body::before {
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: url("assets/blurred-leaves.png") center bottom / cover no-repeat;
+      filter: blur(6px) saturate(0.72);
+      opacity: 0.42;
+      transform: scale(1.025);
+      transform-origin: center bottom;
+    }
+
+    body::after { display: none; }
+
+    .container { width: min(calc(100% - 64px), 1150px); }
+
+    .app-header {
+      border: 0;
+      background: transparent;
+    }
+
+    .app-header .container {
+      min-height: 72px;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(20, 31, 54, 0.08);
+    }
+
+    .brand-logo { height: 38px; }
+
+    .header-actions { display: flex; align-items: center; gap: 20px; }
+
+    .header-icon,
+    .avatar {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      color: #435066;
+    }
+
+    .header-icon { background: rgba(255, 255, 255, 0.65); }
+    .header-icon:hover { background: #fff; box-shadow: 0 6px 18px rgba(38, 52, 43, 0.08); }
+    .header-icon svg { width: 21px; height: 21px; }
+    .avatar { background: #e9efec; font-size: 0.9rem; font-weight: 750; }
+
+    main { padding: 56px 0 14px; }
+
+    .intro { margin-bottom: 14px; }
+    .intro h2 { font-size: 2rem; font-weight: 760; letter-spacing: -0.045em; line-height: 1.1; }
+    .intro p { margin-top: 5px; font-size: 0.96rem; }
+    .summary { padding-bottom: 2px; font-size: 0.98rem; font-weight: 500; }
+
+    .composer {
+      grid-template-columns: auto minmax(250px, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 13px 16px;
+      border: 0;
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 10px 32px rgba(35, 45, 39, 0.08);
+    }
+
+    .field {
+      min-height: 46px;
+      padding-inline: 14px;
+      border-color: #dfe3e8;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--text);
+      font-size: 0.94rem;
+    }
+
+    .field::placeholder { color: #9199aa; }
+
+    .add-button,
+    .secondary-button { min-height: 46px; border-radius: 11px; }
+
+    .secondary-button {
+      padding-inline: 19px;
+      border-color: #dce1e7;
+      background: rgba(255, 255, 255, 0.68);
+      font-size: 0.94rem;
+      font-weight: 650;
+    }
+
+    .add-button {
+      padding-inline: 24px;
+      background: linear-gradient(135deg, #789d84, #668c73);
+      font-size: 0.96rem;
+      box-shadow: 0 8px 18px rgba(75, 112, 88, 0.17);
+    }
+
+    .add-button:hover { background: linear-gradient(135deg, #6f947b, #5d8169); }
+    .board-scroll { overflow: visible; padding: 0; }
+
+    .board {
+      min-width: 0;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .column {
+      min-height: max(540px, calc(100vh - 309px));
+      padding: 13px 14px;
+      border-color: rgba(218, 225, 222, 0.92);
+      border-radius: 16px;
+      background: rgba(251, 253, 252, 0.63);
+      box-shadow: 0 10px 36px rgba(46, 63, 52, 0.035);
+      backdrop-filter: blur(2px);
+    }
+
+    .column-header { min-height: 31px; gap: 11px; margin: 0 4px 10px; }
+    .column-header h3 { font-size: 1.02rem; font-weight: 720; letter-spacing: -0.015em; }
+
+    .status-dot { width: 10px; height: 10px; }
+    [data-status="inbox"] .status-dot { background: #aaa9a4; box-shadow: 0 0 0 5px #f0f0ed; }
+    [data-status="progress"] .status-dot { background: #e9b63f; box-shadow: 0 0 0 5px #fff2d4; }
+    [data-status="done"] .status-dot { background: #57a477; box-shadow: 0 0 0 5px #e3f4eb; }
+
+    .count {
+      min-width: 34px;
+      height: 30px;
+      margin-left: 4px;
+      padding-inline: 10px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .task-list { gap: 10px; }
+
+    .task-card {
+      position: relative;
+      min-height: 124px;
+      gap: 10px;
+      padding: 16px 10px 16px 16px;
+      border-color: #e2e5e5;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.93);
+      box-shadow: 0 3px 10px rgba(33, 45, 39, 0.055);
+      cursor: pointer;
+    }
+
+    .task-card:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(31, 44, 37, 0.08); }
+    .task-title { font-size: 0.95rem; font-weight: 700; line-height: 1.3; }
+    .task-description {
+      display: -webkit-box;
+      margin: 8px 0 0;
+      overflow: hidden;
+      color: #596477;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+      white-space: pre-line;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+    }
+    .task-meta { margin-top: 3px; font-size: 0.82rem; line-height: 1.3; }
+
+    .task-description + .task-meta { margin-top: 9px; }
+
+    .task-deadline {
+      margin-top: 8px;
+      padding: 4px 8px;
+      border: 1px solid rgba(131, 91, 71, 0.11);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 0.8rem;
+    }
+
+    .card-actions { gap: 3px; margin: -4px -5px -8px 0; }
+    .priority-icon { width: 34px; height: 28px; }
+    .priority-icon svg { display: block; width: 17px; height: 17px; }
+
+    .delete-button,
+    .restore-button { width: 34px; min-width: 34px; min-height: 34px; }
+    .delete-button svg,
+    .restore-button svg { width: 17px; height: 17px; }
+
+    .empty {
+      min-height: 0;
+      justify-content: center;
+      margin: 0;
+      padding: 34px 20px;
+    }
+
+    .empty-icon {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 17px;
+      border-radius: 50%;
+      background: #edf8f2;
+      color: #397c5c;
+    }
+
+    .empty-icon svg { width: 27px; height: 27px; stroke-width: 2; }
+    .empty strong { font-size: 1.02rem; }
+    .empty p { max-width: 250px; margin-top: 8px; font-size: 0.91rem; line-height: 1.5; }
+
+    .floating-action {
+      bottom: 28px;
+      width: 58px;
+      min-width: 58px;
+      min-height: 58px;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #72977e, #60856d);
+      box-shadow: 0 10px 26px rgba(55, 89, 67, 0.23);
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      will-change: transform;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: color var(--transition), box-shadow var(--transition);
+    }
+
+    .floating-action:hover {
+      background: linear-gradient(145deg, #6b9177, #587b63);
+      transform: translate3d(0, 0, 0);
+    }
+
+    .floating-action:active { transform: translate3d(0, 0, 0); }
+
+    .trash-trigger { right: 28px; }
+    .deadline-trigger { right: 99px; }
+
+    .side-note {
+      position: fixed;
+      z-index: -1;
+      color: rgba(54, 65, 71, 0.47);
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      line-height: 1.8;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .side-note::after { display: block; width: 17px; height: 1px; margin-top: 10px; background: currentColor; content: ""; }
+    .side-note-top { top: 76px; left: 3.2vw; }
+    .side-note-bottom { bottom: 93px; left: 3.2vw; }
+    .side-note-actions { right: 3vw; bottom: 115px; }
+
+    .hand-note {
+      position: fixed;
+      top: 61px;
+      right: 2.7vw;
+      z-index: -1;
+      color: rgba(76, 125, 103, 0.68);
+      font-family: "Segoe Print", "Bradley Hand", cursive;
+      font-size: 0.92rem;
+      font-style: italic;
+      line-height: 1.45;
+      text-align: center;
+      transform: rotate(-9deg);
+      pointer-events: none;
+    }
+
+    .hand-note span { display: block; font-size: 1.6rem; line-height: 1.1; }
+
+    .task-dialog { border-radius: 18px; box-shadow: 0 28px 90px rgba(25, 34, 29, 0.24); }
+    .task-dialog[open] { animation: dialog-slide-up 0.2s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .task-dialog.is-closing { animation: dialog-slide-down 0.2s cubic-bezier(0.64, 0, 0.78, 0) both; }
+    .task-dialog::backdrop {
+      background: rgba(22, 30, 26, 0.32);
+      backdrop-filter: blur(5px);
+      animation: dialog-backdrop-in 0.2s ease-out both;
+    }
+    .task-dialog.is-closing::backdrop { animation: dialog-backdrop-out 0.2s ease-in both; }
+    .task-dialog .dialog-header h2 { font-size: 1.42rem; }
+    .task-dialog .form-label { font-size: 0.92rem; }
+    .task-dialog .field { font-size: 0.96rem; }
+    .task-dialog .trash-description { font-size: 0.95rem; }
+    .task-dialog .task-meta { font-size: 0.86rem; }
+
+    @keyframes dialog-slide-up {
+      from { opacity: 0; transform: translateY(34px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes dialog-slide-down {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(34px) scale(0.985); }
+    }
+
+    @keyframes dialog-backdrop-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes dialog-backdrop-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    @media (max-width: 1420px) {
+      .side-note,
+      .hand-note { display: none; }
+    }
+
+    @media (max-width: 900px) {
+      .container { width: min(calc(100% - 32px), 1150px); }
+      .board-scroll { overflow-x: auto; padding-bottom: 8px; }
+      .board { min-width: 840px; }
+      .column { min-height: 480px; }
+      [data-status="done"] .empty { min-height: 422px; }
+    }
+
+    @media (max-width: 767px) {
+      .app-header .container { min-height: 66px; }
+      .brand-logo { height: 32px; }
+      .header-actions { gap: 8px; }
+      .header-icon,
+      .avatar { width: 38px; height: 38px; }
+      main { padding-block: 42px 32px; }
+      .intro h2 { font-size: 1.7rem; }
+      .composer { padding: 12px; }
+      .add-button,
+      .secondary-button { width: 100%; }
+      .floating-action { bottom: 16px; }
+      .trash-trigger { right: 16px; }
+      .deadline-trigger { right: 86px; }
+    }
   </style>
 </head>
 <body>
   <header class="app-header">
     <div class="container">
       <div class="brand">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><path d="m15 17 2 2 4-5"></path></svg>
-        </span>
-        <h1>To-Do Board</h1>
+        <h1 class="brand-title">
+          <img class="brand-logo" src="assets/planka-logo.png" alt="Planka">
+        </h1>
+      </div>
+      <div class="header-actions" aria-label="Настройки профиля">
+        <button class="header-icon" type="button" aria-label="Оформление" title="Оформление">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg>
+        </button>
+        <span class="avatar" aria-label="Профиль пользователя">A</span>
       </div>
     </div>
   </header>
 
+  <div class="side-note side-note-top" aria-hidden="true">Больше<br>сделанных дел<br>— счастливее ты</div>
+  <div class="side-note side-note-bottom" aria-hidden="true">Порядок<br>вдохновляет</div>
+  <div class="side-note side-note-actions" aria-hidden="true">Сегодня<br>лучше, чем вчера</div>
+  <div class="hand-note" aria-hidden="true">Маленькие шаги<br>к большим целям<span>♡</span></div>
+
   <main class="container">
     <section class="intro" aria-labelledby="page-title">
       <div>
-        <h2 id="page-title">Мои задачи</h2>
+        <h2 id="page-title">Задачи</h2>
         <p>Добавляйте задачи и перемещайте их между этапами.</p>
       </div>
       <span class="summary" id="summary" aria-live="polite"></span>
@@ -641,7 +1034,6 @@
       const clearTrashButton = document.querySelector("#clear-trash");
       let draggedId = null;
       let dropBeforeId = null;
-      let wasDragging = false;
       let editingTaskId = null;
       let showExpiringOnly = false;
       let tasks = load();
@@ -763,10 +1155,15 @@
         const title = document.createElement("p");
         title.className = "task-title";
         title.textContent = task.title;
+        const description = document.createElement("p");
+        description.className = "task-description";
+        description.textContent = task.description;
         const meta = document.createElement("p");
         meta.className = "task-meta";
         meta.textContent = `Добавлено ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(new Date(task.createdAt))}`;
-        content.append(title, meta);
+        content.append(title);
+        if (task.description) content.append(description);
+        content.append(meta);
         if (task.deadline) {
           const deadline = document.createElement("p");
           deadline.className = "task-deadline";
@@ -846,12 +1243,33 @@
         detailTitle.focus();
       }
 
-      function closeTaskDialog() {
-        dialog.close();
-        editingTaskId = null;
+      function closeDialogAnimated(target, afterClose) {
+        if (!target.open || target.classList.contains("is-closing")) return;
+        target.classList.add("is-closing");
+
+        let completed = false;
+        const finish = () => {
+          if (completed) return;
+          completed = true;
+          clearTimeout(fallbackTimer);
+          target.removeEventListener("animationend", handleAnimationEnd);
+          target.classList.remove("is-closing");
+          target.close();
+          afterClose?.();
+        };
+        const handleAnimationEnd = (event) => {
+          if (event.target === target && event.animationName === "dialog-slide-down") finish();
+        };
+        const fallbackTimer = setTimeout(finish, 250);
+
+        target.addEventListener("animationend", handleAnimationEnd);
       }
 
-      function render() {
+      function closeTaskDialog() {
+        closeDialogAnimated(dialog, () => { editingTaskId = null; });
+      }
+
+      function render({ animateEmptyStates = false } = {}) {
         STATUSES.forEach((status) => {
           const columnTasks = tasks.filter((task) => task.status === status && (!showExpiringOnly || isDueToday(task)));
           const statusTasks = columnTasks
@@ -860,7 +1278,7 @@
             .map(({ task }) => task);
           document.querySelector(`[data-list="${status}"]`).replaceChildren(...statusTasks.map(createCard));
         });
-        updateBoardMeta();
+        updateBoardMeta(animateEmptyStates);
         renderTrash();
       }
 
@@ -874,12 +1292,37 @@
         trashTrigger.setAttribute("aria-label", `Открыть корзину. Удалённых задач: ${count}`);
       }
 
-      function updateBoardMeta() {
+      function setEmptyState(status, shouldShow, animate) {
+        const empty = document.querySelector(`[data-empty="${status}"]`);
+        const wasVisible = empty.classList.contains("is-visible");
+
+        empty.classList.remove("is-entering", "is-leaving");
+
+        if (!animate || wasVisible === shouldShow) {
+          empty.classList.toggle("is-visible", shouldShow);
+          return;
+        }
+
+        if (shouldShow) {
+          empty.classList.add("is-visible", "is-entering");
+        } else {
+          empty.classList.add("is-leaving");
+          empty.classList.remove("is-visible");
+        }
+
+        empty.onanimationend = (event) => {
+          if (event.target !== empty) return;
+          empty.classList.remove("is-entering", "is-leaving");
+          empty.onanimationend = null;
+        };
+      }
+
+      function updateBoardMeta(animateEmptyStates = false) {
         const visibleTasks = showExpiringOnly ? tasks.filter(isDueToday) : tasks;
         STATUSES.forEach((status) => {
           const taskCount = visibleTasks.filter((task) => task.status === status).length;
           document.querySelector(`[data-count="${status}"]`).textContent = taskCount;
-          document.querySelector(`[data-empty="${status}"]`).classList.toggle("is-visible", taskCount === 0);
+          setEmptyState(status, taskCount === 0, animateEmptyStates);
         });
         summary.textContent = showExpiringOnly
           ? `${visibleTasks.length} на сегодня · фильтр включён`
@@ -908,7 +1351,7 @@
 
         tasks.splice(insertIndex, 0, task);
         save();
-        render();
+        render({ animateEmptyStates: previousStatus !== status });
 
         announce(previousStatus === status
           ? `Порядок задач в колонке «${LABELS[status]}» изменён.`
@@ -979,11 +1422,16 @@
       });
 
       trashDialog.querySelectorAll('[data-action="close-trash"]').forEach((button) => {
-        button.addEventListener("click", () => trashDialog.close());
+        button.addEventListener("click", () => closeDialogAnimated(trashDialog));
       });
 
       trashDialog.addEventListener("click", (event) => {
-        if (event.target === trashDialog) trashDialog.close();
+        if (event.target === trashDialog) closeDialogAnimated(trashDialog);
+      });
+
+      trashDialog.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        closeDialogAnimated(trashDialog);
       });
 
       trashList.addEventListener("click", (event) => {
@@ -1055,7 +1503,10 @@
         if (event.target === dialog) closeTaskDialog();
       });
 
-      dialog.addEventListener("cancel", () => { editingTaskId = null; });
+      dialog.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        closeTaskDialog();
+      });
 
       board.addEventListener("click", (event) => {
         const button = event.target.closest('[data-action="delete"]');
@@ -1076,7 +1527,7 @@
         }
 
         const card = event.target.closest(".task-card");
-        if (!card || wasDragging) return;
+        if (!card) return;
         const task = tasks.find((item) => item.id === card.dataset.id);
         if (task) openTaskDialog(task);
       });
@@ -1092,7 +1543,6 @@
         const card = event.target.closest(".task-card");
         if (!card) return;
         draggedId = card.dataset.id;
-        wasDragging = true;
         card.classList.add("is-dragging");
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", draggedId);
@@ -1119,7 +1569,6 @@
         event.target.closest(".task-card")?.classList.remove("is-dragging");
         clearDropIndicators();
         draggedId = null;
-        setTimeout(() => { wasDragging = false; }, 150);
       });
 
       render();
