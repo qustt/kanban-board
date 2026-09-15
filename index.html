@@ -124,7 +124,7 @@
     .field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14); }
     .field[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(157, 81, 75, 0.12); }
 
-    .add-button, .secondary-button, .delete-button, .modal-close {
+    .add-button, .secondary-button, .delete-button, .restore-button, .modal-close, .trash-trigger {
       display: inline-flex;
       min-width: 44px;
       min-height: 44px;
@@ -145,8 +145,8 @@
     }
 
     .add-button:hover { transform: translateY(-1px); background: #657b6a; box-shadow: 0 4px 12px rgba(71, 88, 75, 0.14); }
-    .add-button:active, .secondary-button:active, .delete-button:active, .modal-close:active { transform: scale(0.97); }
-    .add-button:focus-visible, .secondary-button:focus-visible, .delete-button:focus-visible, .modal-close:focus-visible, .task-card:focus-visible { outline: 3px solid rgba(115, 138, 120, 0.3); outline-offset: 2px; }
+    .add-button:active, .secondary-button:active, .delete-button:active, .restore-button:active, .modal-close:active, .trash-trigger:active { transform: scale(0.97); }
+    .add-button:focus-visible, .secondary-button:focus-visible, .delete-button:focus-visible, .restore-button:focus-visible, .modal-close:focus-visible, .trash-trigger:focus-visible, .task-card:focus-visible { outline: 3px solid rgba(115, 138, 120, 0.3); outline-offset: 2px; }
 
     .secondary-button {
       gap: 8px;
@@ -265,7 +265,7 @@
     .priority-icon[data-priority="high"] { color: #9b7400; }
     .priority-icon[data-priority="low"] { color: #7c8c83; }
 
-    .delete-button {
+    .delete-button, .restore-button {
       width: 40px;
       min-width: 40px;
       min-height: 40px;
@@ -275,6 +275,49 @@
     }
 
     .delete-button:hover { transform: translateY(-1px); border-color: #f1d9d6; background: #fbefed; color: var(--danger); }
+    .restore-button:hover { transform: translateY(-1px); border-color: #d4e3d6; background: #eef6ef; color: var(--accent); }
+
+    .trash-trigger {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 10;
+      width: 58px;
+      min-width: 58px;
+      min-height: 58px;
+      padding: 0;
+      border: 1px solid #5f7464;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(57, 70, 60, 0.24);
+    }
+
+    .trash-trigger:hover { transform: translateY(-2px); background: #657b6a; box-shadow: 0 12px 28px rgba(57, 70, 60, 0.3); }
+    .trash-trigger svg { width: 25px; height: 25px; overflow: visible; }
+    .trash-lid { transform-box: fill-box; transform-origin: 16% 90%; transition: transform var(--transition); }
+    .trash-trigger:hover .trash-lid, .trash-trigger:focus-visible .trash-lid { transform: translateY(-3px) rotate(-12deg); }
+
+    .trash-badge {
+      position: absolute;
+      top: -4px;
+      right: -3px;
+      display: inline-flex;
+      min-width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      padding-inline: 6px;
+      border: 2px solid var(--bg);
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .trash-badge[hidden] { display: none; }
 
     .task-dialog {
       width: min(calc(100% - 32px), 560px);
@@ -287,6 +330,40 @@
     }
 
     .task-dialog::backdrop { background: rgba(30, 31, 29, 0.42); backdrop-filter: blur(2px); }
+
+    .trash-dialog { width: min(calc(100% - 32px), 640px); }
+    .trash-panel { padding: 24px; }
+    .trash-panel .dialog-header { margin-bottom: 6px; }
+    .trash-description { margin: 0 0 20px; color: var(--muted); font-size: 0.875rem; }
+    .trash-list {
+      display: grid;
+      max-height: min(52vh, 480px);
+      gap: 10px;
+      margin: 0;
+      padding: 0 4px 0 0;
+      overflow-y: auto;
+      list-style: none;
+      scrollbar-color: #cfcfc8 transparent;
+    }
+    .trash-card { cursor: default; }
+    .trash-card:hover { transform: none; }
+    .trash-card .task-meta { line-height: 1.55; }
+    .trash-empty {
+      display: grid;
+      min-height: 190px;
+      place-items: center;
+      align-content: center;
+      color: var(--muted);
+      text-align: center;
+    }
+    .trash-empty[hidden] { display: none; }
+    .trash-empty svg { width: 34px; height: 34px; margin-bottom: 10px; color: var(--accent); }
+    .trash-empty strong { color: var(--text); font-size: 0.9375rem; }
+    .trash-empty p { margin: 4px 0 0; font-size: 0.8125rem; }
+    .trash-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
+    .clear-trash-button { color: var(--danger); }
+    .clear-trash-button:hover:not(:disabled) { border-color: #f1d9d6; background: #fbefed; }
+    .clear-trash-button:disabled { cursor: not-allowed; opacity: 0.45; }
 
     .detail-form { padding: 24px; }
     .dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
@@ -350,6 +427,10 @@
       .modal-grid { grid-template-columns: 1fr; }
       .form-group-wide { grid-column: auto; }
       .dialog-actions .add-button, .dialog-actions .secondary-button { width: auto; }
+      .trash-trigger { right: 16px; bottom: 16px; }
+      .trash-panel { padding: 20px; }
+      .trash-actions { align-items: stretch; flex-direction: column-reverse; }
+      .trash-actions .secondary-button { width: 100%; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -416,6 +497,14 @@
     <p class="sr-only" id="feedback" role="status" aria-live="polite"></p>
   </main>
 
+  <button class="trash-trigger" id="trash-trigger" type="button" aria-label="Открыть корзину. Удалённых задач: 0">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <g class="trash-lid"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path></g>
+      <path d="m19 6-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path>
+    </svg>
+    <span class="trash-badge" id="trash-count" hidden>0</span>
+  </button>
+
   <dialog class="task-dialog" id="task-dialog" aria-labelledby="dialog-title">
     <form class="detail-form" id="detail-form" method="dialog" novalidate>
       <header class="dialog-header">
@@ -457,9 +546,32 @@
     </form>
   </dialog>
 
+  <dialog class="task-dialog trash-dialog" id="trash-dialog" aria-labelledby="trash-dialog-title">
+    <div class="trash-panel">
+      <header class="dialog-header">
+        <h2 id="trash-dialog-title">Корзина</h2>
+        <button class="modal-close" type="button" data-action="close-trash" aria-label="Закрыть корзину">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+      </header>
+      <p class="trash-description">Удалённые задачи можно вернуть в их прежнюю колонку.</p>
+      <ul class="trash-list" id="trash-list" aria-label="Удалённые задачи"></ul>
+      <div class="trash-empty" id="trash-empty">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path></svg>
+        <strong>Корзина пуста</strong>
+        <p>Удалённые задачи появятся здесь.</p>
+      </div>
+      <div class="trash-actions">
+        <button class="secondary-button clear-trash-button" id="clear-trash" type="button">Очистить корзину</button>
+        <button class="secondary-button" type="button" data-action="close-trash">Закрыть</button>
+      </div>
+    </div>
+  </dialog>
+
   <script>
     (() => {
       const STORAGE_KEY = "todo-board.kanban.v1";
+      const TRASH_STORAGE_KEY = "todo-board.trash.v1";
       const STATUSES = ["inbox", "progress", "done"];
       const PRIORITIES = ["high", "normal", "low"];
       const LABELS = { inbox: "Не разобрано", progress: "В работе", done: "Готово" };
@@ -483,11 +595,18 @@
       const summary = document.querySelector("#summary");
       const feedback = document.querySelector("#feedback");
       const board = document.querySelector(".board");
+      const trashTrigger = document.querySelector("#trash-trigger");
+      const trashDialog = document.querySelector("#trash-dialog");
+      const trashList = document.querySelector("#trash-list");
+      const trashEmpty = document.querySelector("#trash-empty");
+      const trashCount = document.querySelector("#trash-count");
+      const clearTrashButton = document.querySelector("#clear-trash");
       let draggedId = null;
       let dropBeforeId = null;
       let wasDragging = false;
       let editingTaskId = null;
       let tasks = load();
+      let deletedTasks = loadTrash();
 
       function load() {
         try {
@@ -506,8 +625,29 @@
         } catch { return defaults.map((task) => ({ ...task })); }
       }
 
+      function loadTrash() {
+        try {
+          const saved = localStorage.getItem(TRASH_STORAGE_KEY);
+          if (saved === null) return [];
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed)
+            ? parsed
+                .filter((task) => task && typeof task.id === "string" && typeof task.title === "string" && STATUSES.includes(task.status))
+                .map((task) => ({
+                  ...task,
+                  description: typeof task.description === "string" ? task.description : "",
+                  priority: PRIORITIES.includes(task.priority) ? task.priority : "normal",
+                  deletedAt: Number.isFinite(task.deletedAt) ? task.deletedAt : Date.now()
+                }))
+            : [];
+        } catch { return []; }
+      }
+
       function save() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+          localStorage.setItem(TRASH_STORAGE_KEY, JSON.stringify(deletedTasks));
+        }
         catch { announce("Не удалось сохранить изменения в браузере."); }
       }
 
@@ -521,6 +661,14 @@
           return crypto.randomUUID();
         }
         return `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function taskNoun(count) {
+        const lastTwo = count % 100;
+        if (lastTwo >= 11 && lastTwo <= 14) return "задач";
+        if (count % 10 === 1) return "задачу";
+        if (count % 10 >= 2 && count % 10 <= 4) return "задачи";
+        return "задач";
       }
 
       function createCard(task) {
@@ -566,6 +714,37 @@
         return card;
       }
 
+      function createTrashCard(task) {
+        const card = document.createElement("li");
+        card.className = "task-card trash-card";
+        card.classList.toggle("is-important", task.priority === "high");
+        card.dataset.id = task.id;
+
+        const content = document.createElement("div");
+        content.className = "task-content";
+        const title = document.createElement("p");
+        title.className = "task-title";
+        title.textContent = task.title;
+        const meta = document.createElement("p");
+        meta.className = "task-meta";
+        const deletedDate = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(task.deletedAt));
+        meta.textContent = `${LABELS[task.status]} · удалено ${deletedDate}`;
+        content.append(title, meta);
+
+        const restore = document.createElement("button");
+        restore.className = "restore-button";
+        restore.type = "button";
+        restore.dataset.action = "restore";
+        restore.setAttribute("aria-label", `Восстановить задачу «${task.title}»`);
+        restore.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 6 6v3"></path></svg>';
+
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+        actions.append(restore);
+        card.append(content, actions);
+        return card;
+      }
+
       function openTaskDialog(task = null) {
         editingTaskId = task?.id ?? null;
         dialogTitle.textContent = task ? "Редактировать задачу" : "Новая задача";
@@ -594,6 +773,17 @@
           document.querySelector(`[data-list="${status}"]`).replaceChildren(...statusTasks.map(createCard));
         });
         updateBoardMeta();
+        renderTrash();
+      }
+
+      function renderTrash() {
+        trashList.replaceChildren(...deletedTasks.map(createTrashCard));
+        const count = deletedTasks.length;
+        trashEmpty.hidden = count !== 0;
+        clearTrashButton.disabled = count === 0;
+        trashCount.textContent = count > 99 ? "99+" : count;
+        trashCount.hidden = count === 0;
+        trashTrigger.setAttribute("aria-label", `Открыть корзину. Удалённых задач: ${count}`);
       }
 
       function updateBoardMeta() {
@@ -705,6 +895,45 @@
 
       openDetailButton.addEventListener("click", () => openTaskDialog());
 
+      trashTrigger.addEventListener("click", () => {
+        renderTrash();
+        trashDialog.showModal();
+      });
+
+      trashDialog.querySelectorAll('[data-action="close-trash"]').forEach((button) => {
+        button.addEventListener("click", () => trashDialog.close());
+      });
+
+      trashDialog.addEventListener("click", (event) => {
+        if (event.target === trashDialog) trashDialog.close();
+      });
+
+      trashList.addEventListener("click", (event) => {
+        const button = event.target.closest('[data-action="restore"]');
+        if (!button) return;
+        const card = button.closest(".trash-card");
+        const task = deletedTasks.find((item) => item.id === card.dataset.id);
+        if (!task) return;
+
+        deletedTasks = deletedTasks.filter((item) => item.id !== task.id);
+        const { deletedAt, ...restoredTask } = task;
+        tasks.push(restoredTask);
+        save();
+        render();
+        announce(`Задача «${task.title}» восстановлена в колонку «${LABELS[task.status]}».`);
+      });
+
+      clearTrashButton.addEventListener("click", () => {
+        if (!deletedTasks.length) return;
+        const count = deletedTasks.length;
+        const confirmed = window.confirm(`Удалить безвозвратно ${count} ${taskNoun(count)} из корзины?`);
+        if (!confirmed) return;
+        deletedTasks = [];
+        save();
+        renderTrash();
+        announce("Корзина очищена.");
+      });
+
       detailForm.addEventListener("submit", (event) => {
         event.preventDefault();
         const title = detailTitle.value.trim();
@@ -754,12 +983,15 @@
         if (button) {
           const card = button.closest(".task-card");
           const task = tasks.find((item) => item.id === card.dataset.id);
+          if (!task) return;
           card.classList.add("is-removing");
+          deletedTasks.unshift({ ...task, deletedAt: Date.now() });
           tasks = tasks.filter((item) => item.id !== card.dataset.id);
           save();
+          renderTrash();
           setTimeout(() => {
             render();
-            announce(`Задача «${task.title}» удалена.`);
+            announce(`Задача «${task.title}» перемещена в корзину.`);
           }, 300);
           return;
         }
