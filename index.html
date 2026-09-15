@@ -124,7 +124,7 @@
     .field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14); }
     .field[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(157, 81, 75, 0.12); }
 
-    .add-button, .secondary-button, .delete-button, .restore-button, .modal-close, .trash-trigger {
+    .add-button, .secondary-button, .delete-button, .restore-button, .modal-close, .floating-action {
       display: inline-flex;
       min-width: 44px;
       min-height: 44px;
@@ -145,8 +145,8 @@
     }
 
     .add-button:hover { transform: translateY(-1px); background: #657b6a; box-shadow: 0 4px 12px rgba(71, 88, 75, 0.14); }
-    .add-button:active, .secondary-button:active, .delete-button:active, .restore-button:active, .modal-close:active, .trash-trigger:active { transform: scale(0.97); }
-    .add-button:focus-visible, .secondary-button:focus-visible, .delete-button:focus-visible, .restore-button:focus-visible, .modal-close:focus-visible, .trash-trigger:focus-visible, .task-card:focus-visible { outline: 3px solid rgba(115, 138, 120, 0.3); outline-offset: 2px; }
+    .add-button:active, .secondary-button:active, .delete-button:active, .restore-button:active, .modal-close:active, .floating-action:active { transform: scale(0.97); }
+    .add-button:focus-visible, .secondary-button:focus-visible, .delete-button:focus-visible, .restore-button:focus-visible, .modal-close:focus-visible, .floating-action:focus-visible, .task-card:focus-visible { outline: 3px solid rgba(115, 138, 120, 0.3); outline-offset: 2px; }
 
     .secondary-button {
       gap: 8px;
@@ -244,6 +244,24 @@
     .task-title { margin: 0; overflow-wrap: anywhere; font-size: 0.875rem; font-weight: 550; }
     .task-meta { margin: 4px 0 0; color: var(--muted); font-size: 0.75rem; }
 
+    .task-deadline {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin: 8px 0 0;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: #f1f1ee;
+      color: #66665f;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .task-deadline svg { width: 14px; height: 14px; }
+    .task-deadline.is-today { background: #f8dfd4; color: #8b443b; }
+    .task-deadline.is-overdue { background: #f6e8e6; color: var(--danger); }
+    .task-card.is-important .task-deadline { background: rgba(255, 255, 255, 0.62); }
+
     .card-actions {
       display: flex;
       flex: none;
@@ -277,9 +295,8 @@
     .delete-button:hover { transform: translateY(-1px); border-color: #f1d9d6; background: #fbefed; color: var(--danger); }
     .restore-button:hover { transform: translateY(-1px); border-color: #d4e3d6; background: #eef6ef; color: var(--accent); }
 
-    .trash-trigger {
+    .floating-action {
       position: fixed;
-      right: 24px;
       bottom: 24px;
       z-index: 10;
       width: 58px;
@@ -293,8 +310,17 @@
       box-shadow: 0 8px 24px rgba(57, 70, 60, 0.24);
     }
 
-    .trash-trigger:hover { transform: translateY(-2px); background: #657b6a; box-shadow: 0 12px 28px rgba(57, 70, 60, 0.3); }
-    .trash-trigger svg { width: 25px; height: 25px; overflow: visible; }
+    .floating-action:hover { transform: translateY(-2px); background: #657b6a; box-shadow: 0 12px 28px rgba(57, 70, 60, 0.3); }
+    .floating-action svg { width: 25px; height: 25px; overflow: visible; }
+    .trash-trigger { right: 24px; }
+    .deadline-trigger { right: 94px; }
+    .deadline-trigger[aria-pressed="true"] {
+      border-color: #8c5147;
+      background: #fff;
+      color: var(--danger);
+      box-shadow: 0 8px 24px rgba(109, 61, 53, 0.2), inset 0 0 0 2px #f1d4cf;
+    }
+    .deadline-trigger[aria-pressed="true"]:hover { background: #fbefed; }
     .trash-lid { transform-box: fill-box; transform-origin: 16% 90%; transition: transform var(--transition); }
     .trash-trigger:hover .trash-lid, .trash-trigger:focus-visible .trash-lid { transform: translateY(-3px) rotate(-12deg); }
 
@@ -427,7 +453,9 @@
       .modal-grid { grid-template-columns: 1fr; }
       .form-group-wide { grid-column: auto; }
       .dialog-actions .add-button, .dialog-actions .secondary-button { width: auto; }
-      .trash-trigger { right: 16px; bottom: 16px; }
+      .floating-action { bottom: 16px; }
+      .trash-trigger { right: 16px; }
+      .deadline-trigger { right: 86px; }
       .trash-panel { padding: 20px; }
       .trash-actions { align-items: stretch; flex-direction: column-reverse; }
       .trash-actions .secondary-button { width: 100%; }
@@ -497,7 +525,11 @@
     <p class="sr-only" id="feedback" role="status" aria-live="polite"></p>
   </main>
 
-  <button class="trash-trigger" id="trash-trigger" type="button" aria-label="Открыть корзину. Удалённых задач: 0">
+  <button class="floating-action deadline-trigger" id="deadline-trigger" type="button" aria-label="Показать только задачи с дедлайном сегодня" aria-pressed="false" title="Задачи на сегодня">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+  </button>
+
+  <button class="floating-action trash-trigger" id="trash-trigger" type="button" aria-label="Открыть корзину. Удалённых задач: 0">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <g class="trash-lid"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path></g>
       <path d="m19 6-1 14H6L5 6"></path><path d="M10 11v5M14 11v5"></path>
@@ -538,6 +570,10 @@
             <option value="done">Готово</option>
           </select>
         </label>
+        <label class="form-group form-group-wide">
+          <span class="form-label">Дедлайн</span>
+          <input class="field" id="detail-deadline" type="date">
+        </label>
       </div>
       <div class="dialog-actions">
         <button class="secondary-button" type="button" data-action="close-dialog">Отмена</button>
@@ -577,8 +613,8 @@
       const LABELS = { inbox: "Не разобрано", progress: "В работе", done: "Готово" };
       const PRIORITY_LABELS = { high: "Важная", normal: "Обычная", low: "Низкая" };
       const defaults = [
-        { id: "welcome-1", title: "Собрать задачи на неделю", description: "", priority: "normal", status: "inbox", createdAt: Date.now() - 120000 },
-        { id: "welcome-2", title: "Подготовить черновик презентации", description: "", priority: "normal", status: "progress", createdAt: Date.now() - 60000 }
+        { id: "welcome-1", title: "Собрать задачи на неделю", description: "", priority: "normal", status: "inbox", deadline: "", createdAt: Date.now() - 120000 },
+        { id: "welcome-2", title: "Подготовить черновик презентации", description: "", priority: "normal", status: "progress", deadline: "", createdAt: Date.now() - 60000 }
       ];
 
       const form = document.querySelector("#task-form");
@@ -591,10 +627,12 @@
       const detailDescription = document.querySelector("#detail-description");
       const detailPriority = document.querySelector("#detail-priority");
       const detailStatus = document.querySelector("#detail-status");
+      const detailDeadline = document.querySelector("#detail-deadline");
       const detailSubmit = document.querySelector("#detail-submit");
       const summary = document.querySelector("#summary");
       const feedback = document.querySelector("#feedback");
       const board = document.querySelector(".board");
+      const deadlineTrigger = document.querySelector("#deadline-trigger");
       const trashTrigger = document.querySelector("#trash-trigger");
       const trashDialog = document.querySelector("#trash-dialog");
       const trashList = document.querySelector("#trash-list");
@@ -605,6 +643,7 @@
       let dropBeforeId = null;
       let wasDragging = false;
       let editingTaskId = null;
+      let showExpiringOnly = false;
       let tasks = load();
       let deletedTasks = loadTrash();
 
@@ -619,7 +658,8 @@
                 .map((task) => ({
                   ...task,
                   description: typeof task.description === "string" ? task.description : "",
-                  priority: PRIORITIES.includes(task.priority) ? task.priority : "normal"
+                  priority: PRIORITIES.includes(task.priority) ? task.priority : "normal",
+                  deadline: normalizeDeadline(task.deadline)
                 }))
             : defaults.map((task) => ({ ...task }));
         } catch { return defaults.map((task) => ({ ...task })); }
@@ -637,6 +677,7 @@
                   ...task,
                   description: typeof task.description === "string" ? task.description : "",
                   priority: PRIORITIES.includes(task.priority) ? task.priority : "normal",
+                  deadline: normalizeDeadline(task.deadline),
                   deletedAt: Number.isFinite(task.deletedAt) ? task.deletedAt : Date.now()
                 }))
             : [];
@@ -663,6 +704,42 @@
         return `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       }
 
+      function normalizeDeadline(value) {
+        if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+        const [year, month, day] = value.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? value : "";
+      }
+
+      function localDateKey(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function isDueToday(task) {
+        return task.deadline === localDateKey();
+      }
+
+      function deadlineRank(task) {
+        if (isDueToday(task)) return task.priority === "high" ? 0 : 1;
+        return task.priority === "high" ? 2 : 3;
+      }
+
+      function formatDeadline(deadline) {
+        const [year, month, day] = deadline.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        const formatted = new Intl.DateTimeFormat("ru-RU", {
+          day: "numeric",
+          month: "short",
+          ...(year !== new Date().getFullYear() ? { year: "numeric" } : {})
+        }).format(date);
+        if (deadline === localDateKey()) return `Сегодня · ${formatted}`;
+        if (deadline < localDateKey()) return `Просрочено · ${formatted}`;
+        return `Дедлайн · ${formatted}`;
+      }
+
       function taskNoun(count) {
         const lastTwo = count % 100;
         if (lastTwo >= 11 && lastTwo <= 14) return "задач";
@@ -678,7 +755,8 @@
         card.dataset.id = task.id;
         card.draggable = true;
         card.tabIndex = 0;
-        card.setAttribute("aria-label", `${task.title}. Приоритет: ${PRIORITY_LABELS[task.priority]}. Статус: ${LABELS[task.status]}`);
+        const deadlineLabel = task.deadline ? `. ${formatDeadline(task.deadline)}` : "";
+        card.setAttribute("aria-label", `${task.title}. Приоритет: ${PRIORITY_LABELS[task.priority]}. Статус: ${LABELS[task.status]}${deadlineLabel}`);
 
         const content = document.createElement("div");
         content.className = "task-content";
@@ -689,6 +767,15 @@
         meta.className = "task-meta";
         meta.textContent = `Добавлено ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(new Date(task.createdAt))}`;
         content.append(title, meta);
+        if (task.deadline) {
+          const deadline = document.createElement("p");
+          deadline.className = "task-deadline";
+          deadline.classList.toggle("is-today", isDueToday(task));
+          deadline.classList.toggle("is-overdue", task.deadline < localDateKey());
+          deadline.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>';
+          deadline.append(document.createTextNode(formatDeadline(task.deadline)));
+          content.append(deadline);
+        }
 
         const priority = document.createElement("span");
         priority.className = "priority-icon";
@@ -753,6 +840,7 @@
         detailDescription.value = task?.description ?? "";
         detailPriority.value = task?.priority ?? "normal";
         detailStatus.value = task?.status ?? "inbox";
+        detailDeadline.value = task?.deadline ?? "";
         detailTitle.removeAttribute("aria-invalid");
         dialog.showModal();
         detailTitle.focus();
@@ -765,11 +853,11 @@
 
       function render() {
         STATUSES.forEach((status) => {
-          const columnTasks = tasks.filter((task) => task.status === status);
-          const statusTasks = [
-            ...columnTasks.filter((task) => task.priority === "high"),
-            ...columnTasks.filter((task) => task.priority !== "high")
-          ];
+          const columnTasks = tasks.filter((task) => task.status === status && (!showExpiringOnly || isDueToday(task)));
+          const statusTasks = columnTasks
+            .map((task, index) => ({ task, index }))
+            .sort((a, b) => deadlineRank(a.task) - deadlineRank(b.task) || a.index - b.index)
+            .map(({ task }) => task);
           document.querySelector(`[data-list="${status}"]`).replaceChildren(...statusTasks.map(createCard));
         });
         updateBoardMeta();
@@ -787,12 +875,15 @@
       }
 
       function updateBoardMeta() {
+        const visibleTasks = showExpiringOnly ? tasks.filter(isDueToday) : tasks;
         STATUSES.forEach((status) => {
-          const taskCount = tasks.filter((task) => task.status === status).length;
+          const taskCount = visibleTasks.filter((task) => task.status === status).length;
           document.querySelector(`[data-count="${status}"]`).textContent = taskCount;
           document.querySelector(`[data-empty="${status}"]`).classList.toggle("is-visible", taskCount === 0);
         });
-        summary.textContent = `${tasks.length} всего · ${tasks.filter((task) => task.status === "done").length} готово`;
+        summary.textContent = showExpiringOnly
+          ? `${visibleTasks.length} на сегодня · фильтр включён`
+          : `${tasks.length} всего · ${tasks.filter((task) => task.status === "done").length} готово`;
       }
 
       function moveTask(id, status, beforeId = null) {
@@ -800,50 +891,24 @@
         if (taskIndex === -1) return;
 
         const task = tasks[taskIndex];
-        const card = [...board.querySelectorAll(".task-card")].find((item) => item.dataset.id === id);
         const previousStatus = task.status;
-        if (task.priority === "high" && previousStatus === status) {
-          announce("Важные задачи закреплены в начале колонки.");
-          return;
-        }
 
         tasks.splice(taskIndex, 1);
         task.status = status;
 
         let insertIndex = tasks.length;
-        if (task.priority === "high") {
-          const firstTaskInColumn = tasks.find((item) => item.status === status);
-          if (firstTaskInColumn) insertIndex = tasks.indexOf(firstTaskInColumn);
+        const taskRank = deadlineRank(task);
+        const beforeTask = tasks.find((item) => item.id === beforeId && item.status === status && deadlineRank(item) === taskRank);
+        if (beforeTask) {
+          insertIndex = tasks.indexOf(beforeTask);
         } else {
-          const beforeTask = tasks.find((item) => item.id === beforeId && item.status === status && item.priority !== "high");
-          if (beforeTask) {
-            insertIndex = tasks.indexOf(beforeTask);
-          } else {
-            const targetTasks = tasks.filter((item) => item.status === status);
-            if (targetTasks.length) insertIndex = tasks.lastIndexOf(targetTasks.at(-1)) + 1;
-          }
+          const rankTasks = tasks.filter((item) => item.status === status && deadlineRank(item) === taskRank);
+          if (rankTasks.length) insertIndex = tasks.lastIndexOf(rankTasks.at(-1)) + 1;
         }
 
         tasks.splice(insertIndex, 0, task);
         save();
-
-        if (card) {
-          const targetList = document.querySelector(`[data-list="${status}"]`);
-          let beforeCard = null;
-
-          if (task.priority === "high") {
-            beforeCard = targetList.querySelector(".task-card");
-          } else if (beforeId) {
-            beforeCard = [...targetList.querySelectorAll(".task-card")]
-              .find((item) => item.dataset.id === beforeId) ?? null;
-          }
-
-          targetList.insertBefore(card, beforeCard);
-          card.setAttribute("aria-label", `${task.title}. Приоритет: ${PRIORITY_LABELS[task.priority]}. Статус: ${LABELS[task.status]}`);
-          updateBoardMeta();
-        } else {
-          render();
-        }
+        render();
 
         announce(previousStatus === status
           ? `Порядок задач в колонке «${LABELS[status]}» изменён.`
@@ -858,10 +923,13 @@
       function updateDropPosition(column, pointerY) {
         clearDropIndicators();
         const draggedTask = tasks.find((task) => task.id === draggedId);
-        if (!draggedTask || draggedTask.priority === "high") return;
+        if (!draggedTask) return;
 
         const candidates = [...column.querySelectorAll(".task-card:not(.is-dragging)")]
-          .filter((card) => tasks.find((task) => task.id === card.dataset.id)?.priority !== "high");
+          .filter((card) => {
+            const candidate = tasks.find((task) => task.id === card.dataset.id);
+            return candidate && deadlineRank(candidate) === deadlineRank(draggedTask);
+          });
         const beforeCard = candidates.find((card) => {
           const rect = card.getBoundingClientRect();
           return pointerY < rect.top + rect.height / 2;
@@ -882,7 +950,7 @@
           announce("Введите название задачи.");
           return;
         }
-        tasks.push({ id: createId(), title, description: "", priority: "normal", status: "inbox", createdAt: Date.now() });
+        tasks.push({ id: createId(), title, description: "", priority: "normal", status: "inbox", deadline: "", createdAt: Date.now() });
         input.removeAttribute("aria-invalid");
         save();
         render();
@@ -894,6 +962,16 @@
       input.addEventListener("input", () => { if (input.value.trim()) input.removeAttribute("aria-invalid"); });
 
       openDetailButton.addEventListener("click", () => openTaskDialog());
+
+      deadlineTrigger.addEventListener("click", () => {
+        showExpiringOnly = !showExpiringOnly;
+        deadlineTrigger.setAttribute("aria-pressed", String(showExpiringOnly));
+        deadlineTrigger.setAttribute("aria-label", showExpiringOnly
+          ? "Показать все задачи"
+          : "Показать только задачи с дедлайном сегодня");
+        render();
+        announce(showExpiringOnly ? "Показаны только задачи с дедлайном сегодня." : "Показаны все задачи.");
+      });
 
       trashTrigger.addEventListener("click", () => {
         renderTrash();
@@ -948,7 +1026,8 @@
           title,
           description: detailDescription.value.trim(),
           priority: detailPriority.value,
-          status: detailStatus.value
+          status: detailStatus.value,
+          deadline: normalizeDeadline(detailDeadline.value)
         };
         const existingTask = tasks.find((task) => task.id === editingTaskId);
 
