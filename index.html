@@ -3,112 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Минималистичный список задач To-Do Board">
+  <meta name="description" content="Канбан-доска для повседневных задач">
   <title>To-Do Board</title>
   <style>
     :root {
-      --color-background: #f7f7f5;
-      --color-surface: #ffffff;
-      --color-text-primary: #292927;
-      --color-text-secondary: #7a7a75;
-      --color-border: #e8e8e4;
-      --color-status-backlog: #e9e7e2;
-      --color-status-todo: #dce8f5;
-      --color-status-progress: #f6e8c9;
-      --color-status-done: #ddeedc;
-      --color-accent: #738a78;
-      --color-accent-hover: #657b6a;
-      --color-danger: #9d514b;
-      --color-danger-soft: #fbefed;
-
-      --radius-sm: 6px;
-      --radius-md: 8px;
-      --radius-lg: 10px;
-      --radius-xl: 12px;
-
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-6: 24px;
-      --space-8: 32px;
-
-      --transition-base: 0.3s ease;
-      --content-width: 760px;
+      --bg: #f7f7f5;
+      --surface: #fff;
+      --text: #292927;
+      --muted: #7a7a75;
+      --border: #e8e8e4;
+      --backlog: #e9e7e2;
+      --progress: #f6e8c9;
+      --done: #ddeedc;
+      --accent: #738a78;
+      --danger: #9d514b;
+      --radius: 12px;
+      --transition: 0.3s ease;
     }
 
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-    }
-
-    html {
-      color-scheme: light;
-    }
+    * { box-sizing: border-box; }
 
     body {
       min-width: 320px;
       min-height: 100vh;
       margin: 0;
-      background: var(--color-background);
-      color: var(--color-text-primary);
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 16px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
 
-    button,
-    input,
-    select {
-      font: inherit;
-    }
+    button, input, select { font: inherit; }
+    button, select { cursor: pointer; }
 
-    button {
-      cursor: pointer;
-    }
-
-    .app-header {
-      background: rgba(247, 247, 245, 0.94);
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .app-header__inner,
-    .workspace {
-      width: min(100% - 48px, var(--content-width));
+    .container {
+      width: min(100% - 48px, 1440px);
       margin-inline: auto;
     }
 
-    .app-header__inner {
+    .app-header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(247, 247, 245, 0.94);
+    }
+
+    .app-header .container {
       display: flex;
-      align-items: center;
       min-height: 72px;
-    }
-
-    .brand {
-      display: inline-flex;
       align-items: center;
-      gap: var(--space-3);
     }
 
-    .brand__mark {
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+
+    .brand-mark {
       display: grid;
       width: 36px;
       height: 36px;
       place-items: center;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface);
-      color: var(--color-accent);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--accent);
     }
 
-    .brand__mark svg,
-    .icon-button svg,
-    .drag-handle svg,
-    .primary-button svg,
-    .empty-state svg {
+    svg {
       width: 18px;
       height: 18px;
       fill: none;
@@ -118,211 +78,126 @@
       stroke-linejoin: round;
     }
 
-    .brand__title {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
+    main { padding-block: 32px 48px; }
 
-    .workspace {
-      padding-block: var(--space-8) 48px;
-    }
-
-    .page-intro {
+    .intro {
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      gap: var(--space-4);
-      margin-bottom: var(--space-6);
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
-    .page-intro h1 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-
-    .page-intro p {
-      margin: var(--space-1) 0 0;
-      color: var(--color-text-secondary);
-      font-size: 0.875rem;
-    }
-
-    .task-summary {
-      flex: 0 0 auto;
-      color: var(--color-text-secondary);
-      font-size: 0.8125rem;
-      font-weight: 500;
-    }
+    .intro h2 { margin: 0; font-size: 1.5rem; letter-spacing: -0.025em; }
+    .intro p, .summary { color: var(--muted); font-size: 0.875rem; }
+    .intro p { margin: 4px 0 0; }
+    .summary { flex: none; font-size: 0.8125rem; font-weight: 500; }
 
     .composer {
-      display: flex;
-      gap: var(--space-3);
-      margin-bottom: var(--space-4);
-      padding: var(--space-4);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-xl);
-      background: var(--color-surface);
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 180px auto;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
-    .task-input {
+    .field {
       min-width: 0;
       min-height: 44px;
-      flex: 1;
       padding: 10px 12px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      outline: none;
-      background: var(--color-surface);
-      color: var(--color-text-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: 0;
+      background: var(--surface);
+      color: var(--text);
       font-size: 0.875rem;
-      transition:
-        border-color var(--transition-base),
-        box-shadow var(--transition-base);
+      transition: border-color var(--transition), box-shadow var(--transition);
     }
 
-    .task-input::placeholder {
-      color: var(--color-text-secondary);
-    }
+    .field::placeholder { color: var(--muted); }
+    .field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14); }
+    .field[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(157, 81, 75, 0.12); }
 
-    .task-input:focus {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14);
-    }
-
-    .task-input[aria-invalid="true"] {
-      border-color: var(--color-danger);
-      box-shadow: 0 0 0 3px rgba(157, 81, 75, 0.12);
-    }
-
-    .sort-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: var(--space-3);
-      margin-bottom: var(--space-6);
-    }
-
-    .sort-toolbar label {
-      color: var(--color-text-secondary);
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-
-    .sort-select {
-      min-height: 40px;
-      padding: 8px 36px 8px 12px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      outline: none;
-      background-color: var(--color-surface);
-      color: var(--color-text-primary);
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition:
-        border-color var(--transition-base),
-        box-shadow var(--transition-base);
-    }
-
-    .sort-select:focus-visible {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px rgba(115, 138, 120, 0.14);
-    }
-
-    .primary-button,
-    .icon-button {
+    .add-button, .delete-button {
       display: inline-flex;
       min-width: 44px;
       min-height: 44px;
       align-items: center;
       justify-content: center;
-      border-radius: var(--radius-md);
-      transition:
-        background-color var(--transition-base),
-        color var(--transition-base),
-        border-color var(--transition-base),
-        transform var(--transition-base),
-        box-shadow var(--transition-base);
+      border-radius: 8px;
+      transition: background var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition);
     }
 
-    .primary-button {
-      gap: var(--space-2);
+    .add-button {
+      gap: 8px;
       padding: 10px 16px;
       border: 0;
-      background: var(--color-accent);
-      color: #ffffff;
+      background: var(--accent);
+      color: #fff;
       font-size: 0.875rem;
       font-weight: 600;
     }
 
-    .primary-button:hover {
-      transform: translateY(-1px);
-      background: var(--color-accent-hover);
-      box-shadow: 0 4px 12px rgba(71, 88, 75, 0.14);
+    .add-button:hover { transform: translateY(-1px); background: #657b6a; box-shadow: 0 4px 12px rgba(71, 88, 75, 0.14); }
+    .add-button:active, .delete-button:active { transform: scale(0.97); }
+    .add-button:focus-visible, .delete-button:focus-visible, .task-card:focus-visible { outline: 3px solid rgba(115, 138, 120, 0.3); outline-offset: 2px; }
+
+    .board-scroll { width: 100%; overflow-x: auto; padding-bottom: 8px; scrollbar-color: #cfcfc8 transparent; }
+
+    .board {
+      display: grid;
+      min-width: 900px;
+      grid-template-columns: repeat(3, minmax(280px, 1fr));
+      gap: 16px;
     }
 
-    .primary-button:active,
-    .icon-button:active {
-      transform: scale(0.97);
-    }
-
-    .primary-button:focus-visible,
-    .icon-button:focus-visible {
-      outline: 3px solid rgba(115, 138, 120, 0.3);
-      outline-offset: 2px;
-    }
-
-    .board-column {
-      padding: var(--space-4);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-xl);
-      background: rgba(255, 255, 255, 0.45);
-    }
-
-    .column-header {
+    .column {
       display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      min-height: 28px;
-      margin-bottom: var(--space-3);
+      min-height: 420px;
+      flex-direction: column;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.45);
+      transition: border-color var(--transition), background var(--transition);
     }
 
-    .status-dot {
-      width: 9px;
-      height: 9px;
-      flex: 0 0 auto;
-      border-radius: 50%;
-      background: #94afcd;
-      box-shadow: 0 0 0 3px var(--color-status-todo);
-    }
+    .column.is-over { border-color: rgba(115, 138, 120, 0.65); background: rgba(115, 138, 120, 0.07); }
+    .column-header { display: flex; min-height: 28px; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .column-header h3 { margin: 0; font-size: 0.875rem; font-weight: 600; }
 
-    .column-header h2 {
-      margin: 0;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
+    .status-dot { width: 9px; height: 9px; flex: none; border-radius: 50%; }
+    [data-status="inbox"] .status-dot { background: #aaa79f; box-shadow: 0 0 0 3px var(--backlog); }
+    [data-status="progress"] .status-dot { background: #c49b50; box-shadow: 0 0 0 3px var(--progress); }
+    [data-status="done"] .status-dot { background: #78a477; box-shadow: 0 0 0 3px var(--done); }
 
-    .task-count {
+    .count {
       display: inline-flex;
       min-width: 24px;
       height: 24px;
       align-items: center;
       justify-content: center;
-      margin-left: var(--space-1);
+      margin-left: 4px;
       padding-inline: 7px;
-      border-radius: var(--radius-sm);
-      background: var(--color-status-todo);
-      color: #536779;
+      border-radius: 6px;
+      color: #62625d;
       font-size: 0.75rem;
       font-weight: 600;
     }
 
+    [data-status="inbox"] .count { background: var(--backlog); }
+    [data-status="progress"] .count { background: var(--progress); color: #765d2f; }
+    [data-status="done"] .count { background: var(--done); color: #537452; }
+
     .task-list {
       display: grid;
-      gap: var(--space-3);
+      align-content: start;
+      gap: 12px;
+      min-height: 96px;
       margin: 0;
       padding: 0;
       list-style: none;
@@ -330,871 +205,304 @@
 
     .task-card {
       display: flex;
-      align-items: center;
-      gap: var(--space-3);
+      align-items: flex-start;
+      gap: 12px;
       min-width: 0;
       padding: 14px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      background: var(--color-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: 0;
+      background: var(--surface);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-      transition:
-        transform var(--transition-base),
-        box-shadow var(--transition-base),
-        border-color var(--transition-base),
-        opacity var(--transition-base);
-      animation: card-enter 0.3s ease;
-    }
-
-    .task-card:hover {
-      transform: translateY(-2px);
-      border-color: #deded8;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    }
-
-    .task-card.is-removing {
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(-4px) scale(0.97);
-    }
-
-    .task-card.is-dragging {
-      position: fixed;
-      z-index: 1000;
-      margin: 0;
-      border-color: var(--color-accent);
-      box-shadow: 0 14px 32px rgba(41, 41, 39, 0.18);
-      opacity: 0.98;
-      pointer-events: none;
-      transition: none;
-      animation: none;
-      will-change: transform;
-    }
-
-    .task-placeholder {
-      border: 1px dashed rgba(115, 138, 120, 0.55);
-      border-radius: var(--radius-lg);
-      background: rgba(115, 138, 120, 0.08);
-    }
-
-    .task-list.is-dragging,
-    .task-list.is-dragging .drag-handle,
-    body.is-card-dragging {
-      cursor: grabbing;
-    }
-
-    .task-list.is-dragging .task-card {
-      will-change: transform;
-    }
-
-    .task-card__content {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .task-card__title {
-      overflow-wrap: anywhere;
-      margin: 0;
-      font-size: 0.875rem;
-      font-weight: 550;
-      line-height: 1.45;
-    }
-
-    .task-card__meta {
-      margin: var(--space-1) 0 0;
-      color: var(--color-text-secondary);
-      font-size: 0.75rem;
-    }
-
-    .task-card__actions {
-      display: flex;
-      align-items: center;
-      gap: var(--space-1);
-    }
-
-    .drag-handle {
-      display: grid;
-      width: 32px;
-      min-height: 44px;
-      flex: 0 0 auto;
-      margin-left: -6px;
-      place-items: center;
-      color: var(--color-text-secondary);
       cursor: grab;
-      touch-action: none;
-      user-select: none;
-      transition: color var(--transition-base);
+      animation: card-enter 0.3s ease;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition), opacity var(--transition);
     }
 
-    .drag-handle:hover {
-      color: var(--color-text-primary);
-    }
+    .task-card:hover { transform: translateY(-2px); border-color: #deded8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
+    .task-card.is-dragging { opacity: 0.45; transform: scale(1.02); cursor: grabbing; }
+    .task-card.is-removing { pointer-events: none; opacity: 0; transform: translateY(-4px) scale(0.97); }
+    .task-content { min-width: 0; flex: 1; }
+    .task-title { margin: 0; overflow-wrap: anywhere; font-size: 0.875rem; font-weight: 550; }
+    .task-meta { margin: 4px 0 0; color: var(--muted); font-size: 0.75rem; }
 
-    .drag-handle[hidden] {
-      display: none;
-    }
-
-    .icon-button {
-      flex: 0 0 auto;
+    .delete-button {
+      width: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      margin: -8px -8px 0 0;
       border: 1px solid transparent;
       background: transparent;
-      color: var(--color-text-secondary);
+      color: var(--muted);
     }
 
-    .icon-button:hover {
-      transform: translateY(-1px);
-      border-color: var(--color-border);
-      background: var(--color-background);
-      color: var(--color-text-primary);
-    }
+    .delete-button:hover { transform: translateY(-1px); border-color: #f1d9d6; background: #fbefed; color: var(--danger); }
 
-    .delete-button:hover {
-      transform: translateY(-1px);
-      border-color: #f1d9d6;
-      background: var(--color-danger-soft);
-      color: var(--color-danger);
-    }
-
-    .empty-state {
+    .empty {
       display: none;
-      min-height: 200px;
+      min-height: 240px;
+      flex: 1;
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      padding: var(--space-8) var(--space-4);
+      margin-top: 4px;
+      padding: 32px 16px;
       border: 1px dashed #d9d9d3;
-      border-radius: var(--radius-lg);
-      color: var(--color-text-secondary);
+      border-radius: 10px;
+      color: var(--muted);
       text-align: center;
     }
 
-    .empty-state.is-visible {
-      display: flex;
-      animation: card-enter 0.3s ease;
-    }
+    .empty.is-visible { display: flex; }
+    .empty-icon { display: grid; width: 42px; height: 42px; margin-bottom: 12px; place-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--accent); }
+    .empty strong { color: var(--text); font-size: 0.875rem; }
+    .empty p { max-width: 220px; margin: 4px 0 0; font-size: 0.8125rem; }
 
-    .empty-state__icon {
-      display: grid;
-      width: 44px;
-      height: 44px;
-      margin-bottom: var(--space-3);
-      place-items: center;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      background: var(--color-surface);
-      color: var(--color-accent);
-    }
-
-    .empty-state strong {
-      color: var(--color-text-primary);
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-
-    .empty-state p {
-      max-width: 280px;
-      margin: var(--space-1) 0 0;
-      font-size: 0.8125rem;
-    }
-
-    .visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
     @keyframes card-enter {
-      from {
-        opacity: 0;
-        transform: translateY(-6px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     @media (max-width: 767px) {
-      .app-header__inner,
-      .workspace {
-        width: min(100% - 32px, var(--content-width));
-      }
-
-      .app-header__inner {
-        min-height: 64px;
-      }
-
-      .workspace {
-        padding-block: var(--space-6) var(--space-8);
-      }
-
-      .page-intro {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: var(--space-2);
-        margin-bottom: var(--space-4);
-      }
-
-      .composer {
-        flex-direction: column;
-        padding: var(--space-3);
-      }
-
-      .sort-toolbar {
-        align-items: stretch;
-        flex-direction: column;
-        gap: var(--space-2);
-        margin-bottom: var(--space-4);
-      }
-
-      .sort-select {
-        width: 100%;
-      }
-
-      .primary-button {
-        width: 100%;
-      }
-
-      .board-column {
-        padding: var(--space-3);
-      }
-
-      .task-card {
-        padding: var(--space-3);
-      }
-
-      .task-card__actions {
-        gap: 0;
-      }
+      .container { width: min(100% - 32px, 1440px); }
+      .app-header .container { min-height: 64px; }
+      main { padding-block: 24px 32px; }
+      .intro { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+      .composer { grid-template-columns: 1fr; padding: 12px; margin-bottom: 16px; }
+      .add-button { width: 100%; }
+      .board { min-width: 840px; }
+      .column { min-height: 380px; padding: 12px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
 <body>
   <header class="app-header">
-    <div class="app-header__inner">
-      <div class="brand" aria-label="To-Do Board">
-        <span class="brand__mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <rect x="4" y="4" width="6" height="6" rx="1"></rect>
-            <rect x="14" y="4" width="6" height="6" rx="1"></rect>
-            <rect x="4" y="14" width="6" height="6" rx="1"></rect>
-            <path d="m15 17 2 2 4-5"></path>
-          </svg>
+    <div class="container">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><path d="m15 17 2 2 4-5"></path></svg>
         </span>
-        <p class="brand__title">To-Do Board</p>
+        <h1>To-Do Board</h1>
       </div>
     </div>
   </header>
 
-  <main class="workspace">
-    <section class="page-intro" aria-labelledby="page-title">
+  <main class="container">
+    <section class="intro" aria-labelledby="page-title">
       <div>
-        <h1 id="page-title">Мои задачи</h1>
-        <p>Всё важное — в одном спокойном списке.</p>
+        <h2 id="page-title">Мои задачи</h2>
+        <p>Добавляйте задачи и перемещайте их между этапами.</p>
       </div>
-      <span class="task-summary" id="task-summary" aria-live="polite"></span>
+      <span class="summary" id="summary" aria-live="polite"></span>
     </section>
 
     <form class="composer" id="task-form" novalidate>
-      <label class="visually-hidden" for="task-input">Название новой задачи</label>
-      <input
-        class="task-input"
-        id="task-input"
-        name="task"
-        type="text"
-        maxlength="120"
-        autocomplete="off"
-        placeholder="Например, подготовить план на неделю"
-        required
-      >
-      <button class="primary-button" type="submit">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 5v14M5 12h14"></path>
-        </svg>
-        <span>Добавить задачу</span>
+      <label class="sr-only" for="task-input">Название новой задачи</label>
+      <input class="field" id="task-input" maxlength="120" autocomplete="off" placeholder="Например, подготовить план на неделю" required>
+      <label class="sr-only" for="task-status">Статус новой задачи</label>
+      <select class="field" id="task-status">
+        <option value="inbox">Не разобрано</option>
+        <option value="progress">В работе</option>
+        <option value="done">Готово</option>
+      </select>
+      <button class="add-button" type="submit">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        Добавить задачу
       </button>
     </form>
 
-    <div class="sort-toolbar">
-      <label for="sort-mode">Сортировка</label>
-      <select class="sort-select" id="sort-mode">
-        <option value="custom">Пользовательский порядок</option>
-        <option value="created">По дате создания — сначала новые</option>
-        <option value="title">По названию — от А до Я</option>
-      </select>
+    <div class="board-scroll">
+      <section class="board" aria-label="Канбан-доска">
+        <article class="column" data-status="inbox">
+          <header class="column-header"><span class="status-dot"></span><h3>Не разобрано</h3><span class="count" data-count="inbox">0</span></header>
+          <ul class="task-list" data-list="inbox" aria-label="Задачи: Не разобрано"></ul>
+          <div class="empty" data-empty="inbox"><span class="empty-icon"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg></span><strong>Здесь пока пусто</strong><p>Новые идеи и задачи можно складывать сюда.</p></div>
+        </article>
+
+        <article class="column" data-status="progress">
+          <header class="column-header"><span class="status-dot"></span><h3>В работе</h3><span class="count" data-count="progress">0</span></header>
+          <ul class="task-list" data-list="progress" aria-label="Задачи: В работе"></ul>
+          <div class="empty" data-empty="progress"><span class="empty-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><strong>Нет активных задач</strong><p>Перетащите сюда задачу, когда начнёте работу.</p></div>
+        </article>
+
+        <article class="column" data-status="done">
+          <header class="column-header"><span class="status-dot"></span><h3>Готово</h3><span class="count" data-count="done">0</span></header>
+          <ul class="task-list" data-list="done" aria-label="Задачи: Готово"></ul>
+          <div class="empty" data-empty="done"><span class="empty-icon"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg></span><strong>Готовых задач нет</strong><p>Завершённые задачи появятся в этой колонке.</p></div>
+        </article>
+      </section>
     </div>
 
-    <section class="board-column" aria-labelledby="column-title">
-      <header class="column-header">
-        <span class="status-dot" aria-hidden="true"></span>
-        <h2 id="column-title">К выполнению</h2>
-        <span class="task-count" id="task-count" aria-hidden="true">0</span>
-      </header>
-
-      <ul class="task-list" id="task-list"></ul>
-
-      <div class="empty-state" id="empty-state">
-        <span class="empty-state__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="M9 11l3 3L22 4"></path>
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-          </svg>
-        </span>
-        <strong>Список задач пуст</strong>
-        <p>Добавьте первую задачу с помощью поля выше.</p>
-      </div>
-    </section>
-
-    <p class="visually-hidden" id="task-feedback" role="status" aria-live="polite"></p>
+    <p class="sr-only" id="feedback" role="status" aria-live="polite"></p>
   </main>
 
   <script>
     (() => {
-      const STORAGE_KEY = "todo-board.tasks.v1";
-      const SORT_STORAGE_KEY = "todo-board.sort.v1";
-      const REMOVE_ANIMATION_MS = 300;
-      const REORDER_ANIMATION_MS = 180;
-      const SORT_MODES = new Set(["custom", "created", "title"]);
-      const defaultTasks = [
-        { id: "welcome-1", title: "Составить список задач на сегодня", createdAt: Date.now() - 120000 },
-        { id: "welcome-2", title: "Определить главную задачу дня", createdAt: Date.now() - 60000 }
+      const STORAGE_KEY = "todo-board.kanban.v1";
+      const STATUSES = ["inbox", "progress", "done"];
+      const LABELS = { inbox: "Не разобрано", progress: "В работе", done: "Готово" };
+      const defaults = [
+        { id: "welcome-1", title: "Собрать задачи на неделю", status: "inbox", createdAt: Date.now() - 120000 },
+        { id: "welcome-2", title: "Подготовить черновик презентации", status: "progress", createdAt: Date.now() - 60000 }
       ];
 
       const form = document.querySelector("#task-form");
       const input = document.querySelector("#task-input");
-      const list = document.querySelector("#task-list");
-      const count = document.querySelector("#task-count");
-      const summary = document.querySelector("#task-summary");
-      const emptyState = document.querySelector("#empty-state");
-      const feedback = document.querySelector("#task-feedback");
-      const sortSelect = document.querySelector("#sort-mode");
+      const statusInput = document.querySelector("#task-status");
+      const summary = document.querySelector("#summary");
+      const feedback = document.querySelector("#feedback");
+      const board = document.querySelector(".board");
+      let draggedId = null;
+      let tasks = load();
 
-      let tasks = loadTasks();
-      let sortMode = loadSortMode();
-      let draggedTaskId = null;
-      let draggedElement = null;
-      let draggedHandle = null;
-      let dragPlaceholder = null;
-      let dragPointerId = null;
-      let dragOriginLeft = 0;
-      let dragOriginTop = 0;
-      let dragOffsetX = 0;
-      let dragOffsetY = 0;
-      let dragFrame = null;
-      let pendingPointerPosition = null;
-
-      function loadTasks() {
+      function load() {
         try {
-          const savedTasks = localStorage.getItem(STORAGE_KEY);
-
-          if (savedTasks === null) {
-            return defaultTasks;
-          }
-
-          const parsedTasks = JSON.parse(savedTasks);
-          return Array.isArray(parsedTasks) ? parsedTasks : defaultTasks;
-        } catch (error) {
-          return defaultTasks;
-        }
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved === null) return defaults.map((task) => ({ ...task }));
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed)
+            ? parsed.filter((task) => task && typeof task.id === "string" && typeof task.title === "string" && STATUSES.includes(task.status))
+            : defaults.map((task) => ({ ...task }));
+        } catch { return defaults.map((task) => ({ ...task })); }
       }
 
-      function saveTasks() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-        } catch (error) {
-          announce("Не удалось сохранить изменения в браузере.");
-        }
+      function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+        catch { announce("Не удалось сохранить изменения в браузере."); }
       }
 
-      function loadSortMode() {
-        try {
-          const savedMode = localStorage.getItem(SORT_STORAGE_KEY);
-          return SORT_MODES.has(savedMode) ? savedMode : "custom";
-        } catch (error) {
-          return "custom";
-        }
-      }
-
-      function saveSortMode() {
-        try {
-          localStorage.setItem(SORT_STORAGE_KEY, sortMode);
-        } catch (error) {
-          announce("Не удалось сохранить выбранную сортировку в браузере.");
-        }
+      function announce(message) {
+        feedback.textContent = "";
+        setTimeout(() => { feedback.textContent = message; }, 20);
       }
 
       function createId() {
         if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
           return crypto.randomUUID();
         }
-
         return `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       }
 
-      function pluralizeTasks(value) {
-        const lastTwoDigits = value % 100;
-        const lastDigit = value % 10;
+      function createCard(task) {
+        const card = document.createElement("li");
+        card.className = "task-card";
+        card.dataset.id = task.id;
+        card.draggable = true;
+        card.tabIndex = 0;
+        card.setAttribute("aria-label", `${task.title}. Статус: ${LABELS[task.status]}`);
 
-        if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
-          return "задач";
-        }
-
-        if (lastDigit === 1) {
-          return "задача";
-        }
-
-        if (lastDigit >= 2 && lastDigit <= 4) {
-          return "задачи";
-        }
-
-        return "задач";
-      }
-
-      function formatCreatedAt(timestamp) {
-        return new Intl.DateTimeFormat("ru-RU", {
-          day: "numeric",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit"
-        }).format(new Date(timestamp));
-      }
-
-      function createDragHandle() {
-        const handle = document.createElement("span");
-
-        handle.className = "drag-handle";
-        handle.hidden = sortMode !== "custom";
-        handle.title = "Перетащить задачу";
-        handle.setAttribute("aria-hidden", "true");
-        handle.innerHTML = `
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"></path>
-          </svg>
-        `;
-
-        return handle;
-      }
-
-      function createTaskElement(task) {
-        const item = document.createElement("li");
-        const dragHandle = createDragHandle();
         const content = document.createElement("div");
+        content.className = "task-content";
         const title = document.createElement("p");
-        const meta = document.createElement("p");
-        const actions = document.createElement("div");
-        const deleteButton = document.createElement("button");
-
-        item.className = "task-card";
-        item.dataset.taskId = task.id;
-
-        content.className = "task-card__content";
-        title.className = "task-card__title";
+        title.className = "task-title";
         title.textContent = task.title;
-        meta.className = "task-card__meta";
-        meta.textContent = `Добавлено ${formatCreatedAt(task.createdAt)}`;
-
-        actions.className = "task-card__actions";
-
-        deleteButton.className = "icon-button delete-button";
-        deleteButton.type = "button";
-        deleteButton.dataset.action = "delete";
-        deleteButton.setAttribute("aria-label", `Удалить задачу «${task.title}»`);
-        deleteButton.innerHTML = `
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 6h18"></path>
-            <path d="M8 6V4h8v2"></path>
-            <path d="M19 6l-1 14H6L5 6"></path>
-            <path d="M10 11v5M14 11v5"></path>
-          </svg>
-        `;
-
+        const meta = document.createElement("p");
+        meta.className = "task-meta";
+        meta.textContent = `Добавлено ${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(new Date(task.createdAt))}`;
         content.append(title, meta);
-        actions.append(deleteButton);
-        item.append(dragHandle, content, actions);
-        return item;
+
+        const remove = document.createElement("button");
+        remove.className = "delete-button";
+        remove.type = "button";
+        remove.dataset.action = "delete";
+        remove.setAttribute("aria-label", `Удалить задачу «${task.title}»`);
+        remove.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"></path></svg>';
+        card.append(content, remove);
+        return card;
       }
 
-      function getVisibleTasks() {
-        const visibleTasks = [...tasks];
-
-        if (sortMode === "created") {
-          return visibleTasks.sort((first, second) => second.createdAt - first.createdAt);
-        }
-
-        if (sortMode === "title") {
-          return visibleTasks.sort((first, second) =>
-            first.title.localeCompare(second.title, "ru", { sensitivity: "base" })
-          );
-        }
-
-        return visibleTasks;
-      }
-
-      function updateCounters() {
-        const total = tasks.length;
-        count.textContent = String(total);
-        summary.textContent = `${total} ${pluralizeTasks(total)}`;
-        emptyState.classList.toggle("is-visible", total === 0);
-      }
-
-      function renderTasks() {
-        const fragment = document.createDocumentFragment();
-        const visibleTasks = getVisibleTasks();
-
-        visibleTasks.forEach((task) => {
-          fragment.append(createTaskElement(task));
+      function render() {
+        STATUSES.forEach((status) => {
+          const statusTasks = tasks.filter((task) => task.status === status);
+          document.querySelector(`[data-list="${status}"]`).replaceChildren(...statusTasks.map(createCard));
+          document.querySelector(`[data-count="${status}"]`).textContent = statusTasks.length;
+          document.querySelector(`[data-empty="${status}"]`).classList.toggle("is-visible", statusTasks.length === 0);
         });
-
-        list.replaceChildren(fragment);
-        updateCounters();
+        summary.textContent = `${tasks.length} всего · ${tasks.filter((task) => task.status === "done").length} готово`;
       }
 
-      function announce(message) {
-        feedback.textContent = "";
-        window.setTimeout(() => {
-          feedback.textContent = message;
-        }, 20);
-      }
-
-      function addTask(title) {
-        const newTask = {
-          id: createId(),
-          title,
-          createdAt: Date.now()
-        };
-
-        tasks.unshift(newTask);
-        saveTasks();
-        renderTasks();
-        announce(`Задача «${title}» добавлена.`);
-      }
-
-      function removeTask(taskId, taskElement) {
-        const task = tasks.find((item) => item.id === taskId);
-
-        if (!task) {
-          return;
-        }
-
-        taskElement.classList.add("is-removing");
-
-        window.setTimeout(() => {
-          tasks = tasks.filter((item) => item.id !== taskId);
-          saveTasks();
-          renderTasks();
-          announce(`Задача «${task.title}» удалена.`);
-        }, REMOVE_ANIMATION_MS);
-      }
-
-      function animateCardReorder(reorderCards) {
-        const stationaryCards = [...list.querySelectorAll(".task-card")];
-        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-        if (prefersReducedMotion || !stationaryCards.every((taskElement) => taskElement.animate)) {
-          reorderCards();
-          return;
-        }
-
-        const previousPositions = new Map();
-
-        stationaryCards.forEach((taskElement) => {
-          previousPositions.set(taskElement, taskElement.getBoundingClientRect().top);
-        });
-
-        stationaryCards.forEach((taskElement) => {
-          taskElement.getAnimations().forEach((animation) => animation.cancel());
-        });
-
-        reorderCards();
-
-        stationaryCards.forEach((taskElement) => {
-          const offset = previousPositions.get(taskElement) - taskElement.getBoundingClientRect().top;
-
-          if (Math.abs(offset) < 1) {
-            return;
-          }
-
-          taskElement.animate(
-            [
-              { transform: `translateY(${offset}px)` },
-              { transform: "translateY(0)" }
-            ],
-            {
-              duration: REORDER_ANIMATION_MS,
-              easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
-            }
-          );
-        });
-      }
-
-      function moveDragPlaceholder(pointerY) {
-        const stationaryCards = [...list.querySelectorAll(".task-card")];
-        const referenceElement = stationaryCards.find((taskElement) => {
-          const bounds = taskElement.getBoundingClientRect();
-          return pointerY < bounds.top + bounds.height / 2;
-        }) ?? null;
-
-        if (referenceElement) {
-          if (dragPlaceholder.nextElementSibling !== referenceElement) {
-            animateCardReorder(() => list.insertBefore(dragPlaceholder, referenceElement));
-          }
-          return;
-        }
-
-        if (dragPlaceholder.nextElementSibling) {
-          animateCardReorder(() => list.append(dragPlaceholder));
-        }
-      }
-
-      function updateDraggedCard() {
-        dragFrame = null;
-
-        if (!draggedElement || !pendingPointerPosition) {
-          return;
-        }
-
-        const { clientX, clientY } = pendingPointerPosition;
-        const offsetX = clientX - dragOffsetX - dragOriginLeft;
-        const offsetY = clientY - dragOffsetY - dragOriginTop;
-
-        pendingPointerPosition = null;
-        draggedElement.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0) rotate(0.5deg)`;
-        moveDragPlaceholder(clientY);
-      }
-
-      function clearDraggedCardStyles() {
-        draggedElement.classList.remove("is-dragging");
-        draggedElement.style.removeProperty("width");
-        draggedElement.style.removeProperty("height");
-        draggedElement.style.removeProperty("left");
-        draggedElement.style.removeProperty("top");
-        draggedElement.style.removeProperty("transform");
-      }
-
-      function saveDraggedOrder() {
-        const tasksById = new Map(tasks.map((task) => [task.id, task]));
-        const orderedTasks = [...list.querySelectorAll(".task-card")]
-          .map((taskElement) => tasksById.get(taskElement.dataset.taskId))
-          .filter(Boolean);
-
-        if (orderedTasks.length !== tasks.length) {
-          return false;
-        }
-
-        tasks = orderedTasks;
-        saveTasks();
-        return true;
-      }
-
-      function finishDragging(shouldSave) {
-        if (!draggedElement) {
-          return;
-        }
-
-        if (dragFrame !== null) {
-          window.cancelAnimationFrame(dragFrame);
-          dragFrame = null;
-        }
-
-        if (pendingPointerPosition) {
-          updateDraggedCard();
-        }
-
-        if (draggedHandle?.hasPointerCapture(dragPointerId)) {
-          draggedHandle.releasePointerCapture(dragPointerId);
-        }
-
-        const movedTask = tasks.find((task) => task.id === draggedTaskId);
-
-        if (shouldSave) {
-          const draggedBounds = draggedElement.getBoundingClientRect();
-          dragPlaceholder.replaceWith(draggedElement);
-          clearDraggedCardStyles();
-          const settledBounds = draggedElement.getBoundingClientRect();
-          const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-          if (!prefersReducedMotion && draggedElement.animate) {
-            draggedElement.animate(
-              [
-                {
-                  transform: `translate(${draggedBounds.left - settledBounds.left}px, ${draggedBounds.top - settledBounds.top}px) rotate(0.5deg)`,
-                  boxShadow: "0 14px 32px rgba(41, 41, 39, 0.18)"
-                },
-                {
-                  transform: "translate(0, 0) rotate(0)",
-                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)"
-                }
-              ],
-              {
-                duration: REORDER_ANIMATION_MS,
-                easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
-              }
-            );
-          }
-
-          if (saveDraggedOrder()) {
-            announce(`Задача «${movedTask.title}» перемещена.`);
-          } else {
-            renderTasks();
-          }
-        } else {
-          draggedElement.remove();
-          dragPlaceholder.remove();
-          renderTasks();
-        }
-
-        document.body.classList.remove("is-card-dragging");
-        list.classList.remove("is-dragging");
-        draggedTaskId = null;
-        draggedElement = null;
-        draggedHandle = null;
-        dragPlaceholder = null;
-        dragPointerId = null;
-        dragFrame = null;
-        pendingPointerPosition = null;
+      function moveTask(id, status) {
+        const task = tasks.find((item) => item.id === id);
+        if (!task || task.status === status) return;
+        task.status = status;
+        save();
+        render();
+        announce(`Задача «${task.title}» перемещена в колонку «${LABELS[status]}».`);
       }
 
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         const title = input.value.trim();
-
         if (!title) {
           input.setAttribute("aria-invalid", "true");
           input.focus();
           announce("Введите название задачи.");
           return;
         }
-
+        tasks.push({ id: createId(), title, status: statusInput.value, createdAt: Date.now() });
         input.removeAttribute("aria-invalid");
-        addTask(title);
+        save();
+        render();
         form.reset();
         input.focus();
+        announce(`Задача «${title}» добавлена.`);
       });
 
-      input.addEventListener("input", () => {
-        if (input.value.trim()) {
-          input.removeAttribute("aria-invalid");
-        }
+      input.addEventListener("input", () => { if (input.value.trim()) input.removeAttribute("aria-invalid"); });
+
+      board.addEventListener("click", (event) => {
+        const button = event.target.closest('[data-action="delete"]');
+        if (!button) return;
+        const card = button.closest(".task-card");
+        const task = tasks.find((item) => item.id === card.dataset.id);
+        card.classList.add("is-removing");
+        tasks = tasks.filter((item) => item.id !== card.dataset.id);
+        save();
+        setTimeout(() => {
+          render();
+          announce(`Задача «${task.title}» удалена.`);
+        }, 300);
       });
 
-      list.addEventListener("click", (event) => {
-        const deleteButton = event.target.closest("[data-action='delete']");
-
-        if (!deleteButton) {
-          return;
-        }
-
-        const taskElement = deleteButton.closest(".task-card");
-        removeTask(taskElement.dataset.taskId, taskElement);
+      board.addEventListener("dragstart", (event) => {
+        const card = event.target.closest(".task-card");
+        if (!card) return;
+        draggedId = card.dataset.id;
+        card.classList.add("is-dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", draggedId);
       });
 
-      list.addEventListener("pointerdown", (event) => {
-        const dragHandle = event.target.closest(".drag-handle");
-
-        if (
-          !dragHandle ||
-          sortMode !== "custom" ||
-          event.button !== 0 ||
-          draggedElement
-        ) {
-          return;
-        }
-
+      board.addEventListener("dragover", (event) => {
+        const column = event.target.closest(".column");
+        if (!column || !draggedId) return;
         event.preventDefault();
-        const taskElement = dragHandle.closest(".task-card");
-        const bounds = taskElement.getBoundingClientRect();
-
-        draggedTaskId = taskElement.dataset.taskId;
-        draggedElement = taskElement;
-        draggedHandle = dragHandle;
-        dragPointerId = event.pointerId;
-        dragOriginLeft = bounds.left;
-        dragOriginTop = bounds.top;
-        dragOffsetX = event.clientX - bounds.left;
-        dragOffsetY = event.clientY - bounds.top;
-
-        dragPlaceholder = document.createElement("li");
-        dragPlaceholder.className = "task-placeholder";
-        dragPlaceholder.style.height = `${bounds.height}px`;
-        dragPlaceholder.setAttribute("aria-hidden", "true");
-        list.insertBefore(dragPlaceholder, taskElement);
-
-        draggedElement.classList.add("is-dragging");
-        draggedElement.style.width = `${bounds.width}px`;
-        draggedElement.style.height = `${bounds.height}px`;
-        draggedElement.style.left = `${bounds.left}px`;
-        draggedElement.style.top = `${bounds.top}px`;
-        draggedElement.style.transform = "translate3d(0, 0, 0) rotate(0.5deg)";
-        document.body.append(draggedElement);
-        draggedHandle.setPointerCapture(dragPointerId);
-        document.body.classList.add("is-card-dragging");
-        list.classList.add("is-dragging");
+        document.querySelectorAll(".column").forEach((item) => item.classList.toggle("is-over", item === column));
       });
 
-      window.addEventListener("pointermove", (event) => {
-        if (!draggedElement || event.pointerId !== dragPointerId) {
-          return;
-        }
-
+      board.addEventListener("drop", (event) => {
+        const column = event.target.closest(".column");
+        if (!column || !draggedId) return;
         event.preventDefault();
-        pendingPointerPosition = {
-          clientX: event.clientX,
-          clientY: event.clientY
-        };
-
-        if (dragFrame === null) {
-          dragFrame = window.requestAnimationFrame(updateDraggedCard);
-        }
-      }, { passive: false });
-
-      window.addEventListener("pointerup", (event) => {
-        if (draggedElement && event.pointerId === dragPointerId) {
-          finishDragging(true);
-        }
+        moveTask(draggedId, column.dataset.status);
       });
 
-      window.addEventListener("pointercancel", (event) => {
-        if (draggedElement && event.pointerId === dragPointerId) {
-          finishDragging(false);
-        }
+      board.addEventListener("dragend", (event) => {
+        event.target.closest(".task-card")?.classList.remove("is-dragging");
+        document.querySelectorAll(".column").forEach((column) => column.classList.remove("is-over"));
+        draggedId = null;
       });
 
-      window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && draggedElement) {
-          finishDragging(false);
-        }
-      });
-
-      sortSelect.value = sortMode;
-      sortSelect.addEventListener("change", () => {
-        if (draggedElement) {
-          finishDragging(false);
-        }
-
-        sortMode = SORT_MODES.has(sortSelect.value) ? sortSelect.value : "custom";
-        saveSortMode();
-        renderTasks();
-        announce(`Сортировка: ${sortSelect.options[sortSelect.selectedIndex].text}.`);
-      });
-
-      renderTasks();
+      render();
+      // Fix even the initial/fallback state in storage so the next session
+      // opens with exactly the same board rather than newly generated defaults.
+      save();
     })();
   </script>
 </body>
